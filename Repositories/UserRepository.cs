@@ -1,6 +1,7 @@
 using CareBaseApi.Models;
 using Microsoft.EntityFrameworkCore;
 using CareBaseApi.Repositories.Interfaces;
+using CareBaseApi.Data;
 
 namespace CareBaseApi.Repositories
 {
