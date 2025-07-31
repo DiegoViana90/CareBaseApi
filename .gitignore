@@ -1,0 +1,56 @@
+# Build output
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio Code
+.vscode/
+
+# Rider
+.idea/
+
+# Logs
+*.log
+
+# NuGet packages
+*.nupkg
+*.snupkg
+.nuget/
+
+# Entity Framework Core Migrations (optional)
+Migrations/
+
+# ASP.NET Core runtime files
+wwwroot/lib/
+
+# Publish output
+publish/
+
+# JetBrains Rider local history
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# dotenv files
+.env
+
+# Rider project files
+*.DotSettings.user
+
+# Backup & Temporary Files
+*.bak
+*.tmp
+*.temp
+
+# ASP.NET Secret Manager
+secrets.json
+
+# Ignore appsettings.json (to avoid committing sensitive info)
+appsettings*.json
