@@ -1,6 +1,5 @@
 using CareBaseApi.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using CareBaseApi.Dtos.Requests;
 
 namespace CareBaseApi.Services.Interfaces
 {
@@ -12,5 +11,6 @@ namespace CareBaseApi.Services.Interfaces
         Task UpdateAsync(Business business);
         Task DeleteAsync(int businessId);
         Task<bool> ExistsAsync(int businessId);
+        Task<Business> CreateBusinessAsync(CreateBusinessRequestDTO createBusinessRequestDTO);
     }
 }

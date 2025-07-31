@@ -53,5 +53,20 @@ namespace CareBaseApi.Repositories
         {
             return await _context.Businesses.AnyAsync(b => b.BusinessId == businessId);
         }
+
+        public async Task<bool> ExistsByNameAsync(string name)
+        {
+            return await _context.Businesses.AnyAsync(b => b.Name == name);
+        }
+
+        public async Task<bool> ExistsByEmailAsync(string email)
+        {
+            return await _context.Businesses.AnyAsync(b => b.Email == email);
+        }
+
+        public async Task<bool> ExistsByTaxNumberAsync(string taxNumber)
+        {
+            return await _context.Businesses.AnyAsync(b => b.TaxNumber == taxNumber);
+        }
     }
 }

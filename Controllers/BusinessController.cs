@@ -2,8 +2,9 @@ using CareBaseApi.Models;
 using CareBaseApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization; 
-
+using Microsoft.AspNetCore.Authorization;
+using CareBaseApi.Dtos.Requests;
+using CareBaseApi.Dtos.Responses;
 namespace CareBaseApi.Controllers
 {
     [ApiController]
@@ -37,14 +38,32 @@ namespace CareBaseApi.Controllers
             return business;
         }
 
-        // POST: api/business
         [HttpPost]
-        public async Task<ActionResult<Business>> CreateBusiness(Business business)
+        public async Task<IActionResult> CreateBusiness(CreateBusinessRequestDTO createBusinessRequestDTO)
         {
+            var business = new Business
+            {
+                Name = createBusinessRequestDTO.BusinessName,
+                TaxNumber = createBusinessRequestDTO.BusinessTaxNumber,
+                Email = createBusinessRequestDTO.BusinessEmail
+            };
+
             _context.Businesses.Add(business);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetBusiness), new { id = business.BusinessId }, business);
+            var response = new CreateBusinessResponseDTO
+            {
+                BusinessId = business.BusinessId,
+                BusinessName = business.Name,
+                TaxNumber = business.TaxNumber,
+                Email = business.Email
+            };
+
+            return CreatedAtAction(nameof(GetBusiness), new { id = business.BusinessId }, new
+            {
+                message = "Business created successfully",
+                data = response
+            });
         }
 
         // PUT: api/business/5
