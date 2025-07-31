@@ -1,3 +1,4 @@
+using CareBaseApi.Enums;
 namespace CareBaseApi.Models
 {
     public class User
@@ -9,5 +10,7 @@ namespace CareBaseApi.Models
         // FK para Business
         public int BusinessId { get; set; }
         public Business Business { get; set; } = null!;
+
+        public UserRole Role { get; set; } = UserRole.User;  // role do usuário dentro da empresa
     }
 }

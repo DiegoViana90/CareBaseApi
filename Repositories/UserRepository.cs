@@ -52,5 +52,11 @@ namespace CareBaseApi.Repositories
         {
             return await _context.Users.AnyAsync(u => u.UserId == userId);
         }
+
+        public async Task<IEnumerable<User>> GetUsersByBusinessIdAsync(int businessId)
+        {
+            return await _context.Users.Where(u => u.BusinessId == businessId).ToListAsync();
+        }
+
     }
 }

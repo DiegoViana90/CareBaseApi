@@ -1,11 +1,13 @@
 using CareBaseApi.Models;
 using CareBaseApi.Services.Interfaces;// Namespace do service
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CareBaseApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -34,6 +36,7 @@ namespace CareBaseApi.Controllers
         }
 
         // POST: api/user
+        [Authorize(Policy = "AdminOnly")]
         [HttpPost]
         public async Task<ActionResult<User>> CreateUser(User user)
         {

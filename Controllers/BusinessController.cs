@@ -2,11 +2,13 @@ using CareBaseApi.Models;
 using CareBaseApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization; 
 
 namespace CareBaseApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class BusinessController : ControllerBase
     {
         private readonly AppDbContext _context;

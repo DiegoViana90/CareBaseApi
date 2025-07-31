@@ -1,6 +1,7 @@
 using CareBaseApi.Models;
 using CareBaseApi.Repositories.Interfaces;
 using CareBaseApi.Services.Interfaces;
+using CareBaseApi.Enums;
 
 namespace CareBaseApi.Services
 {
@@ -25,10 +26,25 @@ namespace CareBaseApi.Services
 
         public async Task<User> CreateUserAsync(User user)
         {
-            // Pode fazer validações ou hashing da senha aqui
+            // Verifica se já existe usuário na empresa
+            var existingUsers = await _repository.GetUsersByBusinessIdAsync(user.BusinessId);
+            if (!existingUsers.Any())
+            {
+                // Se for o primeiro usuário na empresa, define role Admin
+                user.Role = UserRole.Admin;
+            }
+            else
+            {
+                // Caso contrário, mantém o role informado (ou define User por padrão)
+                if (user.Role != UserRole.Admin)
+                    user.Role = UserRole.User;
+            }
+
+            // Aqui você pode adicionar hash da senha, validações, etc
             await _repository.AddAsync(user);
             return user;
         }
+
 
         public async Task UpdateUserAsync(User user)
         {

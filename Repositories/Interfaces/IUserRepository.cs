@@ -12,5 +12,6 @@ namespace CareBaseApi.Repositories.Interfaces
         Task UpdateAsync(User user);
         Task DeleteAsync(int userId);
         Task<bool> ExistsAsync(int userId);
+        Task<IEnumerable<User>> GetUsersByBusinessIdAsync(int businessId);
     }
 }
