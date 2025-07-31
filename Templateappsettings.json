@@ -1,12 +1,17 @@
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=CareBaseDb;Username=seu_usuario;Password=sua_senha"
+    "Jwt": {
+    "Secret": "supersegredosecreto1234567890123456"
   },
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=carebase;Username=postgres;Password=926803"
+  },
+
   "Logging": {
     "LogLevel": {
       "Default": "Information",
       "Microsoft.AspNetCore": "Warning"
     }
   },
+
   "AllowedHosts": "*"
 }

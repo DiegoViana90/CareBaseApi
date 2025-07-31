@@ -1,7 +1,12 @@
+using BCrypt.Net;
 using CareBaseApi.Models;
 using CareBaseApi.Repositories.Interfaces;
 using CareBaseApi.Services.Interfaces;
 using CareBaseApi.Enums;
+using CareBaseApi.Dtos.Responses;
+using Microsoft.AspNetCore.Identity.Data;
+using CareBaseApi.Dtos.Requests;
+using CareBaseApi.Validators;
 
 namespace CareBaseApi.Services
 {
@@ -26,25 +31,19 @@ namespace CareBaseApi.Services
 
         public async Task<User> CreateUserAsync(User user)
         {
-            // Verifica se já existe usuário na empresa
+            // Hash da senha antes de salvar
+            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+
+            // Regra para atribuir role Admin ao primeiro usuário da empresa
             var existingUsers = await _repository.GetUsersByBusinessIdAsync(user.BusinessId);
             if (!existingUsers.Any())
-            {
-                // Se for o primeiro usuário na empresa, define role Admin
                 user.Role = UserRole.Admin;
-            }
-            else
-            {
-                // Caso contrário, mantém o role informado (ou define User por padrão)
-                if (user.Role != UserRole.Admin)
-                    user.Role = UserRole.User;
-            }
+            else if (user.Role != UserRole.Admin)
+                user.Role = UserRole.User;
 
-            // Aqui você pode adicionar hash da senha, validações, etc
             await _repository.AddAsync(user);
             return user;
         }
-
 
         public async Task UpdateUserAsync(User user)
         {
@@ -63,5 +62,26 @@ namespace CareBaseApi.Services
 
             await _repository.DeleteAsync(id);
         }
+
+        public async Task<User?> AuthenticateAsync(LoginRequestDTO loginRequestDTO)
+        {
+            // Validação básica
+            if (!EmailValidator.IsValid(loginRequestDTO.Email) ||
+                !PasswordValidator.IsValid(loginRequestDTO.Password))
+                return null;
+
+            // Busca o usuário pelo email
+            var user = await _repository.GetByEmailAsync(loginRequestDTO.Email);
+            if (user == null)
+                return null;
+
+            // Verifica se a senha está correta
+            bool senhaValida = BCrypt.Net.BCrypt.Verify(loginRequestDTO.Password, user.Password);
+            if (!senhaValida)
+                return null;
+
+            return user;
+        }
+
     }
 }

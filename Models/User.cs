@@ -5,7 +5,7 @@ namespace CareBaseApi.Models
     {
         public int UserId { get; set; }  // chave primária nomeada
         public string Email { get; set; } = null!;
-        public string PasswordHash { get; set; } = null!;
+        public string Password { get; set; } = null!;
 
         // FK para Business
         public int BusinessId { get; set; }

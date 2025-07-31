@@ -22,7 +22,7 @@ namespace CareBaseApi.Data
             {
                 entity.HasKey(u => u.UserId); // chave primária nomeada UserId
                 entity.Property(u => u.Email).IsRequired();
-                entity.Property(u => u.PasswordHash).IsRequired();
+                entity.Property(u => u.Password).IsRequired();
 
                 // FK para Business
                 entity.HasOne(u => u.Business)

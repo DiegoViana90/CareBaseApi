@@ -1,4 +1,5 @@
 using CareBaseApi.Models;
+using CareBaseApi.Dtos.Responses;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -13,5 +14,6 @@ namespace CareBaseApi.Repositories.Interfaces
         Task DeleteAsync(int userId);
         Task<bool> ExistsAsync(int userId);
         Task<IEnumerable<User>> GetUsersByBusinessIdAsync(int businessId);
+        Task<User?> GetByEmailAsync(string email);
     }
 }

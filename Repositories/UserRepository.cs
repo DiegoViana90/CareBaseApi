@@ -2,6 +2,7 @@ using CareBaseApi.Models;
 using Microsoft.EntityFrameworkCore;
 using CareBaseApi.Repositories.Interfaces;
 using CareBaseApi.Data;
+using CareBaseApi.Dtos.Responses;
 
 namespace CareBaseApi.Repositories
 {
@@ -58,5 +59,10 @@ namespace CareBaseApi.Repositories
             return await _context.Users.Where(u => u.BusinessId == businessId).ToListAsync();
         }
 
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await _context.Users.Include(u => u.Business)
+                                       .FirstOrDefaultAsync(u => u.Email == email);
+        }
     }
 }

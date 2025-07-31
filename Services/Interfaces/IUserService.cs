@@ -1,6 +1,6 @@
+using CareBaseApi.Dtos.Requests;
 using CareBaseApi.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity.Data;
 
 namespace CareBaseApi.Services.Interfaces
 {
@@ -11,5 +11,7 @@ namespace CareBaseApi.Services.Interfaces
         Task<User> CreateUserAsync(User user);
         Task UpdateUserAsync(User user);
         Task DeleteUserAsync(int id);
+        Task<User?> AuthenticateAsync(LoginRequestDTO loginRequestDTO);
     }
+
 }
