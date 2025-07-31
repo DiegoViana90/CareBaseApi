@@ -1,10 +1,12 @@
 using CareBaseApi.Models;
-using CareBaseApi.Data;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
+using CareBaseApi.Services.Interfaces;
 using CareBaseApi.Dtos.Requests;
 using CareBaseApi.Dtos.Responses;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
 namespace CareBaseApi.Controllers
 {
     [ApiController]
@@ -12,35 +14,34 @@ namespace CareBaseApi.Controllers
     [Authorize]
     public class BusinessController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IBusinessService _businessService;
 
-        public BusinessController(AppDbContext context)
+        public BusinessController(IBusinessService businessService)
         {
-            _context = context;
+            _businessService = businessService;
         }
 
-        // GET: api/business
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Business>>> GetBusinesses()
         {
-            return await _context.Businesses.Include(b => b.Users).ToListAsync();
+            var businesses = await _businessService.GetAllAsync();
+            return Ok(businesses);
         }
 
-        // GET: api/business/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Business>> GetBusiness(int id)
         {
-            var business = await _context.Businesses.Include(b => b.Users).FirstOrDefaultAsync(b => b.BusinessId == id);
-
+            var business = await _businessService.GetByIdAsync(id);
             if (business == null)
                 return NotFound();
 
-            return business;
+            return Ok(business);
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateBusiness(CreateBusinessRequestDTO createBusinessRequestDTO)
         {
+
             var business = new Business
             {
                 Name = createBusinessRequestDTO.BusinessName,
@@ -48,65 +49,54 @@ namespace CareBaseApi.Controllers
                 Email = createBusinessRequestDTO.BusinessEmail
             };
 
-            _context.Businesses.Add(business);
-            await _context.SaveChangesAsync();
+            var createdBusiness = await _businessService.CreateAsync(business);
 
             var response = new CreateBusinessResponseDTO
             {
-                BusinessId = business.BusinessId,
-                BusinessName = business.Name,
-                TaxNumber = business.TaxNumber,
-                Email = business.Email
+                BusinessId = createdBusiness.BusinessId,
+                BusinessName = createdBusiness.Name,
+                TaxNumber = createdBusiness.TaxNumber,
+                Email = createdBusiness.Email
             };
 
-            return CreatedAtAction(nameof(GetBusiness), new { id = business.BusinessId }, new
+            return CreatedAtAction(nameof(GetBusiness), new { id = createdBusiness.BusinessId }, new
             {
                 message = "Business created successfully",
                 data = response
             });
         }
 
-        // PUT: api/business/5
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBusiness(int id, Business updatedBusiness)
         {
             if (id != updatedBusiness.BusinessId)
                 return BadRequest();
 
-            _context.Entry(updatedBusiness).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                await _businessService.UpdateAsync(updatedBusiness);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (KeyNotFoundException)
             {
-                if (!BusinessExists(id))
-                    return NotFound();
-                else
-                    throw;
+                return NotFound();
             }
 
             return NoContent();
         }
 
-        // DELETE: api/business/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBusiness(int id)
         {
-            var business = await _context.Businesses.FindAsync(id);
-            if (business == null)
+            try
+            {
+                await _businessService.DeleteAsync(id);
+            }
+            catch (KeyNotFoundException)
+            {
                 return NotFound();
-
-            _context.Businesses.Remove(business);
-            await _context.SaveChangesAsync();
+            }
 
             return NoContent();
-        }
-
-        private bool BusinessExists(int id)
-        {
-            return _context.Businesses.Any(b => b.BusinessId == id);
         }
     }
 }
