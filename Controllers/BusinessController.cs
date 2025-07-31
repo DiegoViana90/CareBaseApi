@@ -1,4 +1,5 @@
 using CareBaseApi.Models;
+using CareBaseApi.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

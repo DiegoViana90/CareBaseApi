@@ -1,7 +1,6 @@
 using CareBaseApi.Models;
 using CareBaseApi.Repositories.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using CareBaseApi.Services.Interfaces;
 
 namespace CareBaseApi.Services
 {

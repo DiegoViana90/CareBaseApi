@@ -1,0 +1,8 @@
+C:\Users\diego.viana\Documents\DEV\CareBaseApi\obj\Debug\net9.0\CareBaseApi.csproj.AssemblyReference.cache
+C:\Users\diego.viana\Documents\DEV\CareBaseApi\obj\Debug\net9.0\CareBaseApi.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\diego.viana\Documents\DEV\CareBaseApi\obj\Debug\net9.0\CareBaseApi.AssemblyInfoInputs.cache
+C:\Users\diego.viana\Documents\DEV\CareBaseApi\obj\Debug\net9.0\CareBaseApi.AssemblyInfo.cs
+C:\Users\diego.viana\Documents\DEV\CareBaseApi\obj\Debug\net9.0\CareBaseApi.csproj.CoreCompileInputs.cache
+C:\Users\diego.viana\Documents\DEV\CareBaseApi\obj\Debug\net9.0\CareBaseApi.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\diego.viana\Documents\DEV\CareBaseApi\obj\Debug\net9.0\CareBaseApi.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\diego.viana\Documents\DEV\CareBaseApi\obj\Debug\net9.0\CareBaseApi.sourcelink.json
