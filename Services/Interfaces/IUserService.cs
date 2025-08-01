@@ -8,7 +8,8 @@ namespace CareBaseApi.Services.Interfaces
     {
         Task<IEnumerable<User>> GetAllUsersAsync();
         Task<User?> GetUserByIdAsync(int id);
-        Task<User> CreateUserAsync(User user);
+        Task<User> CreateUserAsync(CreateUserRequestDTO createUserRequestDTO);
+
         Task UpdateUserAsync(User user);
         Task DeleteUserAsync(int id);
         Task<User?> AuthenticateAsync(LoginRequestDTO loginRequestDTO);

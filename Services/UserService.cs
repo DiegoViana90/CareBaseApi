@@ -13,10 +13,12 @@ namespace CareBaseApi.Services
     public class UserService : IUserService
     {
         private readonly IUserRepository _repository;
+        private readonly IBusinessRepository _businessRepository;
 
-        public UserService(IUserRepository repository)
+        public UserService(IUserRepository repository, IBusinessRepository businessRepository)
         {
             _repository = repository;
+            _businessRepository = businessRepository;
         }
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()
@@ -80,6 +82,47 @@ namespace CareBaseApi.Services
             if (!senhaValida)
                 return null;
 
+            return user;
+        }
+
+        public async Task<User> CreateUserAsync(CreateUserRequestDTO createUserRequestDTO)
+        {
+            // 🔒 Validações
+            if (!EmailValidator.IsValid(createUserRequestDTO.Email))
+                throw new ArgumentException("Email inválido.");
+
+            if (!PasswordValidator.IsValid(createUserRequestDTO.Password))
+                throw new ArgumentException("Senha inválida.");
+
+            if (!TaxNumberValidator.IsValid(createUserRequestDTO.TaxNumber) || createUserRequestDTO.TaxNumber.Length != 11)
+                throw new ArgumentException("CPF inválido.");
+
+            if (!TaxNumberValidator.IsValid(createUserRequestDTO.BusinessTaxNumber) || createUserRequestDTO.BusinessTaxNumber.Length != 14)
+                throw new ArgumentException("Tax number da empresa (CNPJ) inválido.");
+
+            var exists = await _businessRepository.ExistsByTaxNumberAsync(createUserRequestDTO.BusinessTaxNumber);
+            if (!exists)
+                throw new ArgumentException("Empresa com o tax number informado não existe.");
+
+            // depois você pode buscar o business se precisar do ID:
+            var business = await _businessRepository.GetAllAsync();
+            var selectedBusiness = business.FirstOrDefault(b => b.TaxNumber == createUserRequestDTO.BusinessTaxNumber);
+            if (selectedBusiness == null)
+                throw new ArgumentException("Empresa não encontrada após validação.");
+
+            var user = new User
+            {
+                Email = createUserRequestDTO.Email,
+                Password = BCrypt.Net.BCrypt.HashPassword(createUserRequestDTO.Password),
+                TaxNumber = createUserRequestDTO.TaxNumber,
+                BusinessId = selectedBusiness.BusinessId
+            };
+
+
+            var existingUsers = await _repository.GetUsersByBusinessIdAsync(user.BusinessId);
+            user.Role = !existingUsers.Any() ? UserRole.Admin : UserRole.User;
+
+            await _repository.AddAsync(user);
             return user;
         }
 

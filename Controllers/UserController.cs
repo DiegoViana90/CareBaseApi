@@ -2,6 +2,8 @@ using CareBaseApi.Models;
 using CareBaseApi.Services.Interfaces;// Namespace do service
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using CareBaseApi.Dtos.Requests;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace CareBaseApi.Controllers
 {
@@ -35,13 +37,33 @@ namespace CareBaseApi.Controllers
             return Ok(user);
         }
 
-        // POST: api/user
-        [Authorize(Policy = "AdminOnly")]
+        [AllowAnonymous]
         [HttpPost]
-        public async Task<ActionResult<User>> CreateUser(User user)
+        [SwaggerOperation(Summary = "Cria um novo usuário vinculado a um CNPJ",
+            Description = "O CPF (TaxNumber) do usuário e o CNPJ da empresa devem ser válidos.")]
+        public async Task<IActionResult> CreateUser(CreateUserRequestDTO createUserRequestDTO)
         {
-            var createdUser = await _userService.CreateUserAsync(user);
-            return CreatedAtAction(nameof(GetUser), new { id = createdUser.UserId }, createdUser);
+            try
+            {
+                var createdUser = await _userService.CreateUserAsync(createUserRequestDTO);
+                return CreatedAtAction(nameof(GetUser), new { id = createdUser.UserId }, new
+                {
+                    message = "Usuário criado com sucesso",
+                    data = new
+                    {
+                        createdUser.UserId,
+                        createdUser.Email,
+                        createdUser.TaxNumber, // ✅ CPF do usuário
+                        Role = createdUser.Role.ToString(),
+                        BusinessId = createdUser.BusinessId
+                    }
+                });
+
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         // PUT: api/user/5

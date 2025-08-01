@@ -46,8 +46,12 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(key),
         ValidateIssuer = false,
         ValidateAudience = false,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+
+        // 👇 Adicione esta linha:
+        RoleClaimType = "role"
     };
+
 });
 
 // Adicionar controllers

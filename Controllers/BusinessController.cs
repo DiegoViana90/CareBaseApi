@@ -1,13 +1,11 @@
 using CareBaseApi.Models;
 using CareBaseApi.Services.Interfaces;
 using CareBaseApi.Dtos.Requests;
-using CareBaseApi.Dtos.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using Swashbuckle.AspNetCore.Annotations;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Security.Claims;
+using CareBaseApi.Utils;
 
 namespace CareBaseApi.Controllers
 {
@@ -16,10 +14,12 @@ namespace CareBaseApi.Controllers
     public class BusinessController : ControllerBase
     {
         private readonly IBusinessService _businessService;
+        private readonly IConfiguration _configuration;
 
-        public BusinessController(IBusinessService businessService)
+        public BusinessController(IBusinessService businessService, IConfiguration configuration)
         {
             _businessService = businessService;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -39,52 +39,37 @@ namespace CareBaseApi.Controllers
             return Ok(business);
         }
 
-        [HttpPost("CreateBusiness")]
+        [HttpPost("create-business")]
         [AllowAnonymous]
-        [SwaggerOperation(Summary = "Cria um novo negócio (Business)", Description = "Cria um novo registro de business no sistema.")]
-        public async Task<IActionResult> CreateBusiness(CreateBusinessRequestDTO request)
+        public async Task<IActionResult> CreateBusiness(CreateBusinessRequestDTO createBusinessRequestDTO)
         {
-            string? userRole = null;
+            var token = HttpContext.Request.Headers["Authorization"].ToString();
+            var jwtSecret = _configuration["Jwt:Secret"];
+            var userRole = TokenUtils.GetRoleFromToken(token, jwtSecret);
 
-            try
+            var createBusinessDTO = new CreateBusinessDTO
             {
-                var user = HttpContext.User;
-                if (user?.Identity?.IsAuthenticated == true)
-                {
-                    userRole = user.FindFirst(ClaimTypes.Role)?.Value;
-                }
-            }
-            catch
-            {
-                return Unauthorized(new { message = "Token inválido ou malformado." });
-            }
-
-            CreateBusinessDTO createBusinessDTO = new CreateBusinessDTO
-            {
-                BusinessName = request.BusinessName,
-                BusinessEmail = request.BusinessEmail,
-                BusinessTaxNumber = request.BusinessTaxNumber,
-                Role = userRole
+                BusinessName = createBusinessRequestDTO.BusinessName,
+                BusinessEmail = createBusinessRequestDTO.BusinessEmail,
+                BusinessTaxNumber = createBusinessRequestDTO.BusinessTaxNumber,
+                Role = userRole // será null se token inválido ou ausente
             };
 
             var createdBusiness = await _businessService.CreateBusinessAsync(createBusinessDTO);
 
-            var response = new CreateBusinessResponseDTO
-            {
-                BusinessId = createdBusiness.BusinessId,
-                BusinessName = createdBusiness.Name,
-                TaxNumber = createdBusiness.TaxNumber,
-                Email = createdBusiness.Email
-            };
-
             return CreatedAtAction(nameof(GetBusiness), new { id = createdBusiness.BusinessId }, new
             {
-                message = "Business created successfully",
-                data = response
+                message = "Empresa criada com sucesso",
+                data = new
+                {
+                    createdBusiness.BusinessId,
+                    createdBusiness.Name,
+                    createdBusiness.Email,
+                    createdBusiness.TaxNumber,
+                    createdBusiness.ExpirationDate
+                }
             });
         }
-
-
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBusiness(int id, Business updatedBusiness)
