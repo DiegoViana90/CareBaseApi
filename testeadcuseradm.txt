@@ -1,0 +1,111 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using CareBaseApi.Models;
+using CareBaseApi.Services.Interfaces;
+using CareBaseApi.Dtos.Requests;
+using CareBaseApi.Dtos.Responses;
+using CareBaseApi.Enums;
+using CareBaseApi.Repositories.Interfaces;
+using BCrypt.Net;
+
+namespace CareBaseApi.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
+    {
+        private readonly IUserService _userService;
+        private readonly ITokenService _tokenService;
+        private readonly IBusinessRepository _businessRepository;
+        private readonly IUserRepository _userRepository;
+
+        public AuthController(
+            IUserService userService,
+            ITokenService tokenService,
+            IBusinessRepository businessRepository,
+            IUserRepository userRepository)
+        {
+            _userService = userService;
+            _tokenService = tokenService;
+            _businessRepository = businessRepository;
+            _userRepository = userRepository;
+        }
+
+        [AllowAnonymous]
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
+        {
+            var user = await _userService.AuthenticateAsync(loginRequestDTO);
+            if (user == null)
+                return Unauthorized(new { message = "Email ou senha inválidos" });
+
+            var token = _tokenService.GenerateToken(user);
+
+            var response = new LoginResponseDTO
+            {
+                Token = token,
+                Email = user.Email,
+                BusinessName = user.Business.Name,
+                Role = user.Role.ToString()
+            };
+
+            return Ok(new
+            {
+                message = "Login realizado com sucesso",
+                data = response
+            });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("mock-admin")]
+        public async Task<IActionResult> CreateAdminMock()
+        {
+            // 1. Cria a empresa (Business)
+            var mockBusiness = new Business
+            {
+                Name = "DiegoCorp",
+                TaxNumber = "teste",
+                Email = "teste@gmail.com",
+                ExpirationDate = DateTime.UtcNow.AddYears(99)
+            };
+
+            await _businessRepository.AddAsync(mockBusiness);
+
+            // 2. Cria o usuário com senha hash
+            var plainPassword = "123456";
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(plainPassword);
+
+            var mockUser = new User
+            {
+                Email = "admin@diegocorp.com",
+                Password = hashedPassword,
+                BusinessId = mockBusiness.BusinessId,
+                Role = UserRole.Admin // Define direto como Admin
+            };
+
+            await _userRepository.AddAsync(mockUser);
+
+            // 3. Recupera o usuário com os dados completos (inclusive Business)
+            var userWithBusiness = await _userRepository.GetByEmailAsync(mockUser.Email);
+            if (userWithBusiness == null)
+                return StatusCode(500, new { message = "Erro ao recuperar o usuário criado" });
+
+            // 4. Gera o token
+            var token = _tokenService.GenerateToken(userWithBusiness);
+
+            var response = new LoginResponseDTO
+            {
+                Token = token,
+                Email = userWithBusiness.Email,
+                BusinessName = userWithBusiness.Business.Name,
+                Role = userWithBusiness.Role.ToString()
+            };
+
+            return Ok(new
+            {
+                message = "Admin mock criado com sucesso",
+                data = response
+            });
+        }
+    }
+}
