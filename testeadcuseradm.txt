@@ -80,7 +80,7 @@ namespace CareBaseApi.Controllers
                 Email = "admin@diegocorp.com",
                 Password = hashedPassword,
                 BusinessId = mockBusiness.BusinessId,
-                Role = UserRole.Admin // Define direto como Admin
+                Role = UserRole.SM // Define direto como Admin
             };
 
             await _userRepository.AddAsync(mockUser);
