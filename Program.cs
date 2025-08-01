@@ -17,7 +17,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Registrar os repositórios e serviços para injeção de dependência
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
+
+// Serviços
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IBusinessService, BusinessService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 // Configurar JWT Authentication
@@ -55,7 +59,8 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "CareBase API", Version = "v1" });
 
-    // Configura o Swagger para pedir o token JWT na UI
+    c.EnableAnnotations(); // <<=== ESSENCIAL PARA [SwaggerOperation] FUNCIONAR
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header usando Bearer scheme. Exemplo: 'Bearer {token}'",
@@ -78,6 +83,7 @@ builder.Services.AddSwaggerGen(c =>
         new List<string>()
     }});
 });
+
 
 var app = builder.Build();
 

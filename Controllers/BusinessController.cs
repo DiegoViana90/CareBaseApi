@@ -4,14 +4,15 @@ using CareBaseApi.Dtos.Requests;
 using CareBaseApi.Dtos.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Swashbuckle.AspNetCore.Annotations;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace CareBaseApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class BusinessController : ControllerBase
     {
         private readonly IBusinessService _businessService;
@@ -38,18 +39,35 @@ namespace CareBaseApi.Controllers
             return Ok(business);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateBusiness(CreateBusinessRequestDTO createBusinessRequestDTO)
+        [HttpPost("CreateBusiness")]
+        [AllowAnonymous]
+        [SwaggerOperation(Summary = "Cria um novo negócio (Business)", Description = "Cria um novo registro de business no sistema.")]
+        public async Task<IActionResult> CreateBusiness(CreateBusinessRequestDTO request)
         {
+            string? userRole = null;
 
-            var business = new Business
+            try
             {
-                Name = createBusinessRequestDTO.BusinessName,
-                TaxNumber = createBusinessRequestDTO.BusinessTaxNumber,
-                Email = createBusinessRequestDTO.BusinessEmail
+                var user = HttpContext.User;
+                if (user?.Identity?.IsAuthenticated == true)
+                {
+                    userRole = user.FindFirst(ClaimTypes.Role)?.Value;
+                }
+            }
+            catch
+            {
+                return Unauthorized(new { message = "Token inválido ou malformado." });
+            }
+
+            CreateBusinessDTO createBusinessDTO = new CreateBusinessDTO
+            {
+                BusinessName = request.BusinessName,
+                BusinessEmail = request.BusinessEmail,
+                BusinessTaxNumber = request.BusinessTaxNumber,
+                Role = userRole
             };
 
-            var createdBusiness = await _businessService.CreateAsync(business);
+            var createdBusiness = await _businessService.CreateBusinessAsync(createBusinessDTO);
 
             var response = new CreateBusinessResponseDTO
             {
@@ -65,6 +83,8 @@ namespace CareBaseApi.Controllers
                 data = response
             });
         }
+
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBusiness(int id, Business updatedBusiness)
