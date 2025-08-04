@@ -8,6 +8,4 @@ namespace CareBaseApi.Dtos.Requests
         public string? Email { get; set; }
         public string? Profession { get; set; }
     }
-
-
 }
