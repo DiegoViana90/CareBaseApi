@@ -14,12 +14,15 @@ namespace CareBaseApi.Controllers
     public class BusinessController : ControllerBase
     {
         private readonly IBusinessService _businessService;
+        private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
 
-        public BusinessController(IBusinessService businessService, IConfiguration configuration)
+
+        public BusinessController(IBusinessService businessService, IConfiguration configuration, IUserService userService)
         {
             _businessService = businessService;
             _configuration = configuration;
+            _userService = userService;
         }
 
         [HttpGet]
@@ -70,6 +73,28 @@ namespace CareBaseApi.Controllers
                 }
             });
         }
+
+        [HttpPost("test-account")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CreateTestAccount([FromBody] CreateTestAccountRequestDTO dto)
+        {
+            try
+            {
+                var createdBusiness = await _businessService.CreateTestAccountAsync(dto);
+
+                return Created("", new
+                {
+                    message = "Conta teste criada com sucesso",
+                    businessId = createdBusiness.BusinessId
+                });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { message = $"Erro: {e.Message}" });
+            }
+        }
+
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBusiness(int id, Business updatedBusiness)

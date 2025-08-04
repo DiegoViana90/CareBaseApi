@@ -4,6 +4,7 @@ using CareBaseApi.Services.Interfaces;
 using CareBaseApi.Validators;
 using CareBaseApi.Dtos.Requests;
 using CareBaseApi.Enums;
+using CareBaseApi.Data;
 using System.Security.Claims;
 
 namespace CareBaseApi.Services
@@ -11,10 +12,17 @@ namespace CareBaseApi.Services
     public class BusinessService : IBusinessService
     {
         private readonly IBusinessRepository _businessRepository;
+        private readonly IUserService _userService;
+        private readonly AppDbContext _dbContext; // usado apenas para controle de transação
 
-        public BusinessService(IBusinessRepository businessRepository)
+        public BusinessService(
+            IBusinessRepository businessRepository,
+            IUserService userService,
+            AppDbContext dbContext)
         {
             _businessRepository = businessRepository;
+            _userService = userService;
+            _dbContext = dbContext;
         }
 
         public async Task<IEnumerable<Business>> GetAllAsync()
@@ -91,6 +99,43 @@ namespace CareBaseApi.Services
             await _businessRepository.AddAsync(business);
 
             return business;
+        }
+        public async Task<Business> CreateTestAccountAsync(CreateTestAccountRequestDTO dto)
+        {
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Cria empresa
+                var business = await CreateBusinessAsync(new CreateBusinessDTO
+                {
+                    BusinessName = dto.BusinessName,
+                    BusinessEmail = dto.BusinessEmail,
+                    BusinessTaxNumber = dto.BusinessTaxNumber,
+                    Role = null // padrão para teste
+                });
+
+                // Cria usuário vinculado à empresa
+                await _userService.CreateUserAsync(new CreateUserRequestDTO
+                {
+                    Name = dto.UserName,
+                    Email = dto.UserEmail,
+                    Password = dto.UserPassword,
+                    TaxNumber = dto.UserTaxNumber,
+                    BusinessTaxNumber = dto.BusinessTaxNumber
+                });
+
+                await transaction.CommitAsync();
+
+                return business;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                // Você pode logar se tiver ILogger:
+                // _logger.LogError(ex, "Erro ao criar conta de teste");
+                throw;
+            }
         }
 
     }

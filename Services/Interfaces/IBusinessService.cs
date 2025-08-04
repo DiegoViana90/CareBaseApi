@@ -10,5 +10,6 @@ namespace CareBaseApi.Services.Interfaces
         Task UpdateAsync(Business business);
         Task DeleteAsync(int businessId);
         Task<Business> CreateBusinessAsync(CreateBusinessDTO createBusinessDTO);
+        Task<Business> CreateTestAccountAsync(CreateTestAccountRequestDTO dto);
     }
 }
