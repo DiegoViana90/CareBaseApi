@@ -39,32 +39,36 @@ namespace CareBaseApi.Controllers
 
         [AllowAnonymous]
         [HttpPost]
-        [SwaggerOperation(Summary = "Cria um novo usuário vinculado a um CNPJ",
-            Description = "O CPF (TaxNumber) do usuário e o CNPJ da empresa devem ser válidos.")]
+        [SwaggerOperation(
+       Summary = "Cria um novo usuário vinculado a um CNPJ",
+       Description = "O CPF (TaxNumber) do usuário e o CNPJ da empresa devem ser válidos."
+   )]
         public async Task<IActionResult> CreateUser(CreateUserRequestDTO createUserRequestDTO)
         {
             try
             {
                 var createdUser = await _userService.CreateUserAsync(createUserRequestDTO);
+
                 return CreatedAtAction(nameof(GetUser), new { id = createdUser.UserId }, new
                 {
                     message = "Usuário criado com sucesso",
                     data = new
                     {
                         createdUser.UserId,
+                        createdUser.Name, // ✅ Adicionado
                         createdUser.Email,
-                        createdUser.TaxNumber, // ✅ CPF do usuário
+                        createdUser.TaxNumber,
                         Role = createdUser.Role.ToString(),
-                        BusinessId = createdUser.BusinessId
+                        createdUser.BusinessId
                     }
                 });
-
             }
             catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
         }
+
 
         // PUT: api/user/5
         [HttpPut("{id}")]

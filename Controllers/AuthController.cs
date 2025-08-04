@@ -11,12 +11,12 @@ namespace CareBaseApi.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IAuthService _authService;
         private readonly ITokenService _tokenService;
 
-        public AuthController(IUserService userService, ITokenService tokenService)
+        public AuthController(IAuthService authService, ITokenService tokenService)
         {
-            _userService = userService;
+            _authService = authService;
             _tokenService = tokenService;
         }
 
@@ -24,9 +24,9 @@ namespace CareBaseApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
         {
-            var user = await _userService.AuthenticateAsync(loginRequestDTO);
+            var user = await _authService.AuthenticateAsync(loginRequestDTO);
             if (user == null)
-                return Unauthorized(new { message = "Email ou senha inválidos" });
+                return Unauthorized(new { message = "Email, senha ou status inválido." });
 
             var token = _tokenService.GenerateToken(user);
 

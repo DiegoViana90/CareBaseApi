@@ -12,7 +12,6 @@ namespace CareBaseApi.Services.Interfaces
 
         Task UpdateUserAsync(User user);
         Task DeleteUserAsync(int id);
-        Task<User?> AuthenticateAsync(LoginRequestDTO loginRequestDTO);
     }
 
 }

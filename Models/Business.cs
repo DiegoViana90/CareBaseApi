@@ -7,13 +7,16 @@ namespace CareBaseApi.Models
     {
         public int BusinessId { get; set; }
         public string Name { get; set; } = null!;
-
-        public string TaxNumber { get; set; } = null!;  // CPF ou CNPJ
+        public string TaxNumber { get; set; } = null!;
         public string Email { get; set; } = null!;
 
         public DateTime? ExpirationDate { get; set; }
 
         public List<User> Users { get; set; } = new();
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public bool IsActive { get; set; } = true;
     }
+
 
 }

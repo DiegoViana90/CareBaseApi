@@ -50,39 +50,41 @@ namespace CareBaseApi.Services
             return await _businessRepository.ExistsAsync(businessId);
         }
 
-        public async Task<Business> CreateBusinessAsync(CreateBusinessDTO createBusinessDTO)
+        public async Task<Business> CreateBusinessAsync(CreateBusinessDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(createBusinessDTO.BusinessName))
-                throw new ArgumentException("Business name is required.");
+            // Validação básica
+            if (string.IsNullOrWhiteSpace(dto.BusinessName))
+                throw new ArgumentException("Nome da empresa é obrigatório.");
 
-            if (string.IsNullOrWhiteSpace(createBusinessDTO.BusinessTaxNumber))
-                throw new ArgumentException("Business tax number is required.");
+            if (string.IsNullOrWhiteSpace(dto.BusinessTaxNumber))
+                throw new ArgumentException("CNPJ ou CPF da empresa é obrigatório.");
 
-            if (!TaxNumberValidator.IsValid(createBusinessDTO.BusinessTaxNumber))
-                throw new ArgumentException("Invalid tax number format.");
+            if (!TaxNumberValidator.IsValid(dto.BusinessTaxNumber))
+                throw new ArgumentException("CNPJ ou CPF inválido.");
 
-            if (string.IsNullOrWhiteSpace(createBusinessDTO.BusinessEmail))
-                throw new ArgumentException("Business email is required.");
+            if (string.IsNullOrWhiteSpace(dto.BusinessEmail))
+                throw new ArgumentException("Email da empresa é obrigatório.");
 
-            if (await _businessRepository.ExistsByNameAsync(createBusinessDTO.BusinessName))
-                throw new ArgumentException("Business name already exists.");
+            // Verificações de unicidade
+            if (await _businessRepository.ExistsByNameAsync(dto.BusinessName))
+                throw new ArgumentException("Já existe uma empresa com esse nome.");
 
-            if (await _businessRepository.ExistsByEmailAsync(createBusinessDTO.BusinessEmail))
-                throw new ArgumentException("Business email already exists.");
+            if (await _businessRepository.ExistsByEmailAsync(dto.BusinessEmail))
+                throw new ArgumentException("Já existe uma empresa com esse email.");
 
-            if (await _businessRepository.ExistsByTaxNumberAsync(createBusinessDTO.BusinessTaxNumber))
-                throw new ArgumentException("Business tax number already exists.");
+            if (await _businessRepository.ExistsByTaxNumberAsync(dto.BusinessTaxNumber))
+                throw new ArgumentException("Já existe uma empresa com esse CNPJ/CPF.");
 
-            // ✅ Aqui sim calcula baseado na role recebida
-            var expiration = createBusinessDTO.Role == UserRole.SM.ToString()
+            // Definir expiração com base na role
+            var expiration = dto.Role == UserRole.SM.ToString()
                 ? DateTime.UtcNow.AddDays(31)
                 : DateTime.UtcNow.AddDays(3);
 
             var business = new Business
             {
-                Name = createBusinessDTO.BusinessName,
-                TaxNumber = createBusinessDTO.BusinessTaxNumber,
-                Email = createBusinessDTO.BusinessEmail,
+                Name = dto.BusinessName,
+                TaxNumber = dto.BusinessTaxNumber,
+                Email = dto.BusinessEmail,
                 ExpirationDate = expiration
             };
 

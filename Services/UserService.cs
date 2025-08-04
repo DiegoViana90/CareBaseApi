@@ -65,26 +65,6 @@ namespace CareBaseApi.Services
             await _repository.DeleteAsync(id);
         }
 
-        public async Task<User?> AuthenticateAsync(LoginRequestDTO loginRequestDTO)
-        {
-            // Validação básica
-            if (!EmailValidator.IsValid(loginRequestDTO.Email) ||
-                !PasswordValidator.IsValid(loginRequestDTO.Password))
-                return null;
-
-            // Busca o usuário pelo email
-            var user = await _repository.GetByEmailAsync(loginRequestDTO.Email);
-            if (user == null)
-                return null;
-
-            // Verifica se a senha está correta
-            bool senhaValida = BCrypt.Net.BCrypt.Verify(loginRequestDTO.Password, user.Password);
-            if (!senhaValida)
-                return null;
-
-            return user;
-        }
-
         public async Task<User> CreateUserAsync(CreateUserRequestDTO createUserRequestDTO)
         {
             // 🔒 Validações
@@ -100,6 +80,9 @@ namespace CareBaseApi.Services
             if (!TaxNumberValidator.IsValid(createUserRequestDTO.BusinessTaxNumber) || createUserRequestDTO.BusinessTaxNumber.Length != 14)
                 throw new ArgumentException("Tax number da empresa (CNPJ) inválido.");
 
+            if (string.IsNullOrWhiteSpace(createUserRequestDTO.Name))
+                throw new ArgumentException("Nome do usuário é obrigatório.");
+
             var exists = await _businessRepository.ExistsByTaxNumberAsync(createUserRequestDTO.BusinessTaxNumber);
             if (!exists)
                 throw new ArgumentException("Empresa com o tax number informado não existe.");
@@ -112,6 +95,7 @@ namespace CareBaseApi.Services
 
             var user = new User
             {
+                Name = createUserRequestDTO.Name, // 👈 novo campo obrigatório
                 Email = createUserRequestDTO.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(createUserRequestDTO.Password),
                 TaxNumber = createUserRequestDTO.TaxNumber,
