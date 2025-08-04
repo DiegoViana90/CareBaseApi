@@ -16,6 +16,8 @@ namespace CareBaseApi.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = true;
+        public List<Patient> Patients { get; set; } = new(); // 👈 falta isso aqui
+
     }
 
 

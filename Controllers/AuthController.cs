@@ -24,25 +24,39 @@ namespace CareBaseApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO loginRequestDTO)
         {
-            var user = await _authService.AuthenticateAsync(loginRequestDTO);
-            if (user == null)
-                return Unauthorized(new { message = "Email, senha ou status inválido." });
-
-            var token = _tokenService.GenerateToken(user);
-
-            var response = new LoginResponseDTO
+            try
             {
-                Token = token,
-                Email = user.Email,
-                BusinessName = user.Business.Name,
-                Role = user.Role.ToString()
-            };
+                var user = await _authService.AuthenticateAsync(loginRequestDTO);
+                if (user == null)
+                    return Unauthorized(new { message = "Email, senha ou status inválido." });
 
-            return Ok(new
+                var token = _tokenService.GenerateToken(user);
+
+                var response = new LoginResponseDTO
+                {
+                    Token = token,
+                    Email = user.Email,
+                    BusinessName = user.Business.Name,
+                    Role = user.Role.ToString()
+                };
+
+                return Ok(new
+                {
+                    message = "Login realizado com sucesso",
+                    data = response
+                });
+            }
+            catch (UnauthorizedAccessException ex)
             {
-                message = "Login realizado com sucesso",
-                data = response
-            });
+                // retorna JSON amigável ao front-end
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // loga e retorna erro genérico para o usuário
+                return StatusCode(500, new { message = "Erro interno no servidor", details = ex.Message });
+            }
         }
+
     }
 }

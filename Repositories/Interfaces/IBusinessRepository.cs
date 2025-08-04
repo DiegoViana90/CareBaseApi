@@ -15,6 +15,7 @@ namespace CareBaseApi.Repositories.Interfaces
         Task<bool> ExistsByNameAsync(string name);
         Task<bool> ExistsByEmailAsync(string email);
         Task<bool> ExistsByTaxNumberAsync(string taxNumber);
+        Task DeactivateAsync(int businessId);
 
     }
 }

@@ -10,12 +10,13 @@ namespace CareBaseApi.Services
     public class AuthService : IAuthService
     {
         private readonly IUserRepository _userRepository;
+        private readonly IBusinessRepository _businessRepository;
 
-        public AuthService(IUserRepository userRepository)
+        public AuthService(IUserRepository userRepository, IBusinessRepository businessRepository)
         {
+            _businessRepository = businessRepository;
             _userRepository = userRepository;
         }
-        
         public async Task<User?> AuthenticateAsync(LoginRequestDTO loginRequestDTO)
         {
             if (!EmailValidator.IsValid(loginRequestDTO.Email) ||
@@ -26,15 +27,19 @@ namespace CareBaseApi.Services
             if (user == null)
                 return null;
 
-            if (!user.IsActive)
-                throw new UnauthorizedAccessException("Usuário está inativo.");
-
             if (!user.Business.IsActive)
                 throw new UnauthorizedAccessException("Empresa está inativa.");
 
+            if (!user.IsActive)
+                throw new UnauthorizedAccessException("Usuário está inativo.");
+
             if (user.Business.ExpirationDate.HasValue &&
-                user.Business.ExpirationDate.Value < DateTime.UtcNow)
+                user.Business.ExpirationDate.Value < DateTime.UtcNow &&
+                user.Business.IsActive)
+            {
+                await _businessRepository.DeactivateAsync(user.Business.BusinessId);
                 throw new UnauthorizedAccessException("Empresa está expirada.");
+            }
 
             bool senhaValida = BCrypt.Net.BCrypt.Verify(loginRequestDTO.Password, user.Password);
             if (!senhaValida)

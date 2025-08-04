@@ -26,10 +26,10 @@ namespace CareBaseApi.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Business>>> GetBusinesses()
+        public async Task<ActionResult<IEnumerable<Business>>> GetBusiness()
         {
-            var businesses = await _businessService.GetAllAsync();
-            return Ok(businesses);
+            var Business = await _businessService.GetAllAsync();
+            return Ok(Business);
         }
 
         [HttpGet("{id}")]

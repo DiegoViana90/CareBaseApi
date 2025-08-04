@@ -17,18 +17,18 @@ namespace CareBaseApi.Repositories
 
         public async Task<IEnumerable<Business>> GetAllAsync()
         {
-            return await _context.Businesses.Include(b => b.Users).ToListAsync();
+            return await _context.Business.Include(b => b.Users).ToListAsync();
         }
 
         public async Task<Business?> GetByIdAsync(int businessId)
         {
-            return await _context.Businesses.Include(b => b.Users)
+            return await _context.Business.Include(b => b.Users)
                 .FirstOrDefaultAsync(b => b.BusinessId == businessId);
         }
 
         public async Task<Business> AddAsync(Business business)
         {
-            _context.Businesses.Add(business);
+            _context.Business.Add(business);
             await _context.SaveChangesAsync();
             return business;
         }
@@ -41,32 +41,44 @@ namespace CareBaseApi.Repositories
 
         public async Task DeleteAsync(int businessId)
         {
-            var business = await _context.Businesses.FindAsync(businessId);
+            var business = await _context.Business.FindAsync(businessId);
             if (business != null)
             {
-                _context.Businesses.Remove(business);
+                _context.Business.Remove(business);
                 await _context.SaveChangesAsync();
             }
         }
 
         public async Task<bool> ExistsAsync(int businessId)
         {
-            return await _context.Businesses.AnyAsync(b => b.BusinessId == businessId);
+            return await _context.Business.AnyAsync(b => b.BusinessId == businessId);
         }
 
         public async Task<bool> ExistsByNameAsync(string name)
         {
-            return await _context.Businesses.AnyAsync(b => b.Name == name);
+            return await _context.Business.AnyAsync(b => b.Name == name);
         }
 
         public async Task<bool> ExistsByEmailAsync(string email)
         {
-            return await _context.Businesses.AnyAsync(b => b.Email == email);
+            return await _context.Business.AnyAsync(b => b.Email == email);
         }
 
         public async Task<bool> ExistsByTaxNumberAsync(string taxNumber)
         {
-            return await _context.Businesses.AnyAsync(b => b.TaxNumber == taxNumber);
+            return await _context.Business.AnyAsync(b => b.TaxNumber == taxNumber);
         }
+
+        public async Task DeactivateAsync(int businessId)
+        {
+            var business = await _context.Business.FindAsync(businessId);
+            if (business != null && business.IsActive)
+            {
+                business.IsActive = false;
+                _context.Entry(business).Property(b => b.IsActive).IsModified = true;
+                await _context.SaveChangesAsync();
+            }
+        }
+
     }
 }
