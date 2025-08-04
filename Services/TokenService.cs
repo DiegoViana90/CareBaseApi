@@ -24,9 +24,10 @@ namespace CareBaseApi.Services
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role.ToString())
+             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+             new Claim(ClaimTypes.Email, user.Email),
+             new Claim(ClaimTypes.Role, user.Role.ToString()),
+             new Claim("BusinessId", user.BusinessId.ToString()) // <- aqui!
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

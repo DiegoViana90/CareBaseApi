@@ -25,7 +25,7 @@ namespace CareBaseApi.Repositories
         {
             return await _context.Patients
                 .Where(p => p.BusinessId == businessId && p.IsActive)
-                .OrderByDescending(p => p.LastConsultationDate)
+                .OrderByDescending(p => p.CreatedAt) // ✅ alterar aqui
                 .ToListAsync();
         }
 

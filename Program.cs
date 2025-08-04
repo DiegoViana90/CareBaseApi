@@ -8,6 +8,8 @@ using CareBaseApi.Repositories.Interfaces;
 using CareBaseApi.Services;
 using CareBaseApi.Services.Interfaces;
 using System.Text;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,7 @@ if (string.IsNullOrEmpty(jwtSecret))
     throw new Exception("JWT secret key not configured!");
 
 var key = Encoding.ASCII.GetBytes(jwtSecret);
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear(); 
 
 builder.Services.AddAuthentication(options =>
 {
@@ -49,7 +52,10 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuer = false,
         ValidateAudience = false,
         ClockSkew = TimeSpan.Zero,
-        RoleClaimType = "role"
+        RoleClaimType = "role",
+
+        // ESSENCIAL: dizer ao ASP.NET para NÃO mapear as claims padrão (como "sub", "nameid", etc)
+        NameClaimType = ClaimTypes.NameIdentifier,
     };
 });
 

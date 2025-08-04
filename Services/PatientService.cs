@@ -17,13 +17,12 @@ namespace CareBaseApi.Services
             _businessRepository = businessRepository;
         }
 
-        public async Task<Patient> CreatePatientAsync(CreatePatientRequestDTO dto)
+        public async Task<Patient> CreatePatientAsync(CreatePatientRequestDTO dto, int businessId)
         {
-            // Validações obrigatórias
             if (string.IsNullOrWhiteSpace(dto.Name))
                 throw new ArgumentException("Nome do paciente é obrigatório.");
 
-            if (!await _businessRepository.ExistsAsync(dto.BusinessId))
+            if (!await _businessRepository.ExistsAsync(businessId))
                 throw new ArgumentException("Empresa informada não existe.");
 
             if (!string.IsNullOrWhiteSpace(dto.Cpf) && !TaxNumberValidator.IsValid(dto.Cpf))
@@ -35,12 +34,10 @@ namespace CareBaseApi.Services
             if (!string.IsNullOrWhiteSpace(dto.Email) && !EmailValidator.IsValid(dto.Email))
                 throw new ArgumentException("Email inválido.");
 
-            // Verifica se já existe paciente com o mesmo CPF ou Email na mesma empresa
-            var existingPatient = GetPatientByCPFAsync(dto.BusinessId, dto.Cpf);
+            var existingPatient = await GetPatientByCPFAsync(businessId, dto.Cpf);
             if (existingPatient != null)
-                throw new ArgumentException("Já existe um paciente com o mesmo CPF ou email para essa empresa.");
+                throw new ArgumentException("Já existe um paciente com o mesmo CPF para essa empresa.");
 
-            // Criação do paciente
             var patient = new Patient
             {
                 Name = dto.Name.Trim(),
@@ -48,8 +45,7 @@ namespace CareBaseApi.Services
                 Phone = dto.Phone?.Trim(),
                 Email = dto.Email?.Trim(),
                 Profession = dto.Profession?.Trim(),
-                LastConsultationDate = dto.LastConsultationDate,
-                BusinessId = dto.BusinessId,
+                BusinessId = businessId,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
@@ -64,5 +60,12 @@ namespace CareBaseApi.Services
 
             return await _patientRepository.FindPatientByCpfAsync(businessId, cpf);
         }
+
+        public async Task<IEnumerable<Patient>> GetPatientsByBusinessAsync(int businessId)
+        {
+            return await _patientRepository.GetByBusinessIdAsync(businessId);
+        }
+
     }
 }
+

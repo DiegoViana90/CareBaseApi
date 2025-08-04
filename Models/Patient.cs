@@ -22,8 +22,6 @@ namespace CareBaseApi.Models
         [MaxLength(100)]
         public string? Profession { get; set; }
 
-        public DateTime? LastConsultationDate { get; set; }
-
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = true;
 
