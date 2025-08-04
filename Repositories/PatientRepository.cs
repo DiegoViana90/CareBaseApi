@@ -35,6 +35,12 @@ namespace CareBaseApi.Repositories
                 .Where(p => p.BusinessId == businessId && p.Cpf == cpf)
                 .FirstOrDefaultAsync();
         }
+        public async Task<Patient?> FindPatientByIdAsync(int patientId)
+        {
+            return await _context.Patients
+                .FirstOrDefaultAsync(p => p.PatientId == patientId);
+        }
+
     }
 
 }

@@ -6,6 +6,7 @@ namespace CareBaseApi.Repositories.Interfaces
     {
         Task<Patient> AddAsync(Patient patient);
         Task<Patient?> FindPatientByCpfAsync(int businessId, string cpf);
-        Task<IEnumerable<Patient>> GetByBusinessIdAsync(int businessId); // ✅ Faltava esse
+        Task<IEnumerable<Patient>> GetByBusinessIdAsync(int businessId);
+        Task<Patient?> FindPatientByIdAsync(int patientId);
     }
 }
