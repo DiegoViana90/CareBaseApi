@@ -7,5 +7,6 @@ namespace CareBaseApi.Services.Interfaces
     {
         Task<Consultation> CreateConsultationAsync(CreateConsultationRequestDTO dto);
         Task<IEnumerable<Consultation>> GetConsultationsByPatientAsync(int patientId);
+        Task<IEnumerable<Consultation>> GetAllConsultationsByBuAsync(int businessId);
     }
 }

@@ -12,13 +12,13 @@ namespace CareBaseApi.Models
 
         public DateTime? ExpirationDate { get; set; }
 
-        public List<User> Users { get; set; } = new();
+        // Salva com o horário local, mas com DateTimeKind.Unspecified
+        public DateTime CreatedAt { get; set; } =
+            DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = true;
-        public List<Patient> Patients { get; set; } = new(); // 👈 falta isso aqui
 
+        public List<User> Users { get; set; } = new();
+        public List<Patient> Patients { get; set; } = new();
     }
-
-
 }

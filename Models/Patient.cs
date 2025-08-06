@@ -22,7 +22,9 @@ namespace CareBaseApi.Models
         [MaxLength(100)]
         public string? Profession { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } =
+        DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified);
+
         public bool IsActive { get; set; } = true;
 
         // 🔗 Relação com Business

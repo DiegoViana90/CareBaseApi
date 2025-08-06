@@ -6,5 +6,6 @@ namespace CareBaseApi.Repositories.Interfaces
     {
         Task<Consultation> AddAsync(Consultation consultation);
         Task<IEnumerable<Consultation>> GetByPatientIdAsync(int patientId);
+        Task<IEnumerable<Consultation>> GetByBusinessIdAsync(int businessId);
     }
 }

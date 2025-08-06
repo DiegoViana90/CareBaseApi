@@ -46,7 +46,8 @@ namespace CareBaseApi.Services
                 Email = dto.Email?.Trim(),
                 Profession = dto.Profession?.Trim(),
                 BusinessId = businessId,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Unspecified),
+
                 IsActive = true
             };
 

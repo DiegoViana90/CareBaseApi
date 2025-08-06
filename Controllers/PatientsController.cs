@@ -73,6 +73,39 @@ namespace CareBaseApi.Controllers
                 return StatusCode(500, new { message = "Erro ao buscar pacientes", details = ex.Message });
             }
         }
+        
+        [HttpGet("cpf/{cpf}")]
+        [SwaggerOperation(Summary = "Buscar paciente por CPF")]
+        public async Task<IActionResult> GetByCpf([FromRoute] string cpf)
+        {
+            try
+            {
+                var businessIdClaim = User.Claims.FirstOrDefault(c => c.Type == "BusinessId");
+                if (businessIdClaim == null)
+                    return Unauthorized(new { message = "BusinessId não encontrado no token." });
+
+                var businessId = int.Parse(businessIdClaim.Value);
+
+                var patient = await _patientService.GetPatientByCPFAsync(businessId, cpf);
+
+                if (patient == null)
+                    return NotFound(new { message = "Paciente não encontrado com o CPF informado." });
+
+                return Ok(new
+                {
+                    message = "Paciente encontrado",
+                    data = patient
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao buscar paciente", details = ex.Message });
+            }
+        }
 
 
     }

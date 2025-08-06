@@ -44,12 +44,29 @@ namespace CareBaseApi.Data
             modelBuilder.Entity<Consultation>(entity =>
             {
                 entity.HasKey(c => c.ConsultationId);
-                entity.Property(c => c.Date).IsRequired();
+
+                entity.Property(c => c.StartDate)
+                      .IsRequired(); // StartDate obrigatório
+
+                entity.Property(c => c.EndDate)
+                      .IsRequired(false); // EndDate opcional
 
                 entity.HasOne(c => c.Patient)
                       .WithMany(p => p.Consultations)
                       .HasForeignKey(c => c.PatientId);
             });
+
+            // 👇 Força todos os DateTime/DateTime? a serem "timestamp without time zone"
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetColumnType("timestamp without time zone");
+                    }
+                }
+            }
         }
     }
 }

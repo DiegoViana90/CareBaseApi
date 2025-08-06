@@ -5,13 +5,30 @@ namespace CareBaseApi.Models
     public class Consultation
     {
         public int ConsultationId { get; set; }
-        public DateTime Date { get; set; }
+
+        private DateTime _startDate;
+        public DateTime StartDate
+        {
+            get => _startDate;
+            set => _startDate = DateTime.SpecifyKind(value, DateTimeKind.Unspecified);
+        }
+
+        private DateTime? _endDate;
+        public DateTime? EndDate
+        {
+            get => _endDate;
+            set => _endDate = value.HasValue
+                ? DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified)
+                : null;
+        }
+
         public decimal? AmountPaid { get; set; }
+
         public string? Notes { get; set; }
 
         public int PatientId { get; set; }
 
-        [JsonIgnore] // 👈 Isso evita o ciclo
+        [JsonIgnore]
         public Patient Patient { get; set; } = null!;
     }
 }

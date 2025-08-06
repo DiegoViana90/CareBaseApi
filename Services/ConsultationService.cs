@@ -18,14 +18,16 @@ namespace CareBaseApi.Services
 
         public async Task<Consultation> CreateConsultationAsync(CreateConsultationRequestDTO dto)
         {
-            // ✅ Corrigido: busca por ID
             var patient = await _patientRepository.FindPatientByIdAsync(dto.PatientId);
             if (patient == null)
                 throw new ArgumentException("Paciente não encontrado.");
 
             var consultation = new Consultation
             {
-                Date = dto.Date,
+                StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Local),
+                EndDate = dto.EndDate.HasValue
+                    ? DateTime.SpecifyKind(dto.EndDate.Value, DateTimeKind.Local)
+                    : null,
                 AmountPaid = dto.AmountPaid,
                 Notes = dto.Notes,
                 PatientId = dto.PatientId
@@ -38,6 +40,10 @@ namespace CareBaseApi.Services
         public async Task<IEnumerable<Consultation>> GetConsultationsByPatientAsync(int patientId)
         {
             return await _consultationRepository.GetByPatientIdAsync(patientId);
+        }
+        public async Task<IEnumerable<Consultation>> GetAllConsultationsByBuAsync(int businessId)
+        {
+            return await _consultationRepository.GetByBusinessIdAsync(businessId);
         }
     }
 }

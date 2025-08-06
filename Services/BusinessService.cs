@@ -84,9 +84,13 @@ namespace CareBaseApi.Services
                 throw new ArgumentException("Já existe uma empresa com esse CNPJ/CPF.");
 
             // Definir expiração com base na role
-            var expiration = dto.Role == UserRole.SM.ToString()
+            // Ajusta para DateTimeKind.Unspecified
+            var expirationRaw = dto.Role == UserRole.SM.ToString()
                 ? DateTime.UtcNow.AddDays(31)
                 : DateTime.UtcNow.AddDays(3);
+
+            // Converte para Unspecified
+            var expiration = DateTime.SpecifyKind(expirationRaw, DateTimeKind.Unspecified);
 
             var business = new Business
             {

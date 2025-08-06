@@ -25,7 +25,14 @@ namespace CareBaseApi.Repositories
         {
             return await _context.Consultations
                 .Where(c => c.PatientId == patientId)
-                .OrderByDescending(c => c.Date)
+                .OrderByDescending(c => c.StartDate)
+                .ToListAsync();
+        }
+        public async Task<IEnumerable<Consultation>> GetByBusinessIdAsync(int businessId)
+        {
+            return await _context.Consultations
+                .Include(c => c.Patient)
+                .Where(c => c.Patient.BusinessId == businessId)
                 .ToListAsync();
         }
     }
