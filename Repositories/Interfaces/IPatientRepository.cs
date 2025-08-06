@@ -1,4 +1,5 @@
 using CareBaseApi.Models;
+using CareBaseApi.Dtos.Requests;
 
 namespace CareBaseApi.Repositories.Interfaces
 {
@@ -8,5 +9,6 @@ namespace CareBaseApi.Repositories.Interfaces
         Task<Patient?> FindPatientByCpfAsync(int businessId, string cpf);
         Task<IEnumerable<Patient>> GetByBusinessIdAsync(int businessId);
         Task<Patient?> FindPatientByIdAsync(int patientId);
+        Task<IEnumerable<PatientListDto>> GetSimplifiedWithLastConsultAsync(int businessId);
     }
 }

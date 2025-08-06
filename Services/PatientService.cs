@@ -67,6 +67,37 @@ namespace CareBaseApi.Services
             return await _patientRepository.GetByBusinessIdAsync(businessId);
         }
 
+        public async Task<IEnumerable<PatientListDto>> GetPatientsWithLastConsultationAsync(int businessId)
+        {
+            var patientsRaw = await _patientRepository.GetSimplifiedWithLastConsultAsync(businessId);
+
+            var result = patientsRaw.Select(p => new PatientListDto
+            {
+                PatientId = p.PatientId,
+                Name = p.Name,
+                Cpf = p.Cpf,
+                Phone = p.Phone,
+                Email = p.Email,
+                Profession = p.Profession,
+                CreatedAt = p.CreatedAt,
+                IsActive = p.IsActive,
+                BusinessId = p.BusinessId,
+                LastConsultation = p.LastConsultation != null
+                    ? new ConsultationDto
+                    {
+                        ConsultationId = p.LastConsultation.ConsultationId,
+                        StartDate = p.LastConsultation.StartDate,
+                        EndDate = p.LastConsultation.EndDate,
+                        AmountPaid = p.LastConsultation.AmountPaid,
+                        Notes = p.LastConsultation.Notes
+                    }
+                    : null
+            });
+
+            return result;
+        }
+
+
     }
 }
 

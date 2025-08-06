@@ -49,6 +49,7 @@ namespace CareBaseApi.Controllers
                 return StatusCode(500, new { message = "Erro interno ao criar paciente", details = ex.Message });
             }
         }
+
         [HttpGet]
         [SwaggerOperation(Summary = "Listar pacientes da empresa logada")]
         public async Task<IActionResult> GetAllPatients()
@@ -73,7 +74,7 @@ namespace CareBaseApi.Controllers
                 return StatusCode(500, new { message = "Erro ao buscar pacientes", details = ex.Message });
             }
         }
-        
+
         [HttpGet("cpf/{cpf}")]
         [SwaggerOperation(Summary = "Buscar paciente por CPF")]
         public async Task<IActionResult> GetByCpf([FromRoute] string cpf)
@@ -104,6 +105,31 @@ namespace CareBaseApi.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Erro ao buscar paciente", details = ex.Message });
+            }
+        }
+
+        [HttpGet("with-last-consultation")]
+        [SwaggerOperation(Summary = "Listar pacientes com última consulta")]
+        public async Task<IActionResult> GetWithLastConsultation()
+        {
+            try
+            {
+                var businessIdClaim = User.Claims.FirstOrDefault(c => c.Type == "BusinessId");
+                if (businessIdClaim == null)
+                    return Unauthorized(new { message = "BusinessId não encontrado no token." });
+
+                var businessId = int.Parse(businessIdClaim.Value);
+                var patients = await _patientService.GetPatientsWithLastConsultationAsync(businessId);
+
+                return Ok(new
+                {
+                    message = "Pacientes encontrados com última consulta",
+                    data = patients
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao buscar pacientes", details = ex.Message });
             }
         }
 

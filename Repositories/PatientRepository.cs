@@ -2,6 +2,7 @@ using CareBaseApi.Data;
 using CareBaseApi.Models;
 using CareBaseApi.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using CareBaseApi.Dtos.Requests;
 
 namespace CareBaseApi.Repositories
 {
@@ -25,9 +26,43 @@ namespace CareBaseApi.Repositories
         {
             return await _context.Patients
                 .Where(p => p.BusinessId == businessId && p.IsActive)
-                .OrderByDescending(p => p.CreatedAt) // ✅ alterar aqui
+                .Include(p => p.Consultations) // 👈 Adiciona as consultas
+                .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<PatientListDto>> GetSimplifiedWithLastConsultAsync(int businessId)
+        {
+            return await _context.Patients
+                .Where(p => p.BusinessId == businessId && p.IsActive)
+                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new PatientListDto
+                {
+                    PatientId = p.PatientId,
+                    Name = p.Name,
+                    Cpf = p.Cpf,
+                    Phone = p.Phone,
+                    Email = p.Email,
+                    Profession = p.Profession,
+                    CreatedAt = p.CreatedAt,
+                    IsActive = p.IsActive,
+                    BusinessId = p.BusinessId,
+
+                    LastConsultation = p.Consultations
+                        .OrderByDescending(c => c.StartDate)
+                        .Select(c => new ConsultationDto
+                        {
+                            ConsultationId = c.ConsultationId,
+                            StartDate = c.StartDate,
+                            EndDate = c.EndDate,
+                            AmountPaid = c.AmountPaid,
+                            Notes = c.Notes
+                        })
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+        }
+
 
         public async Task<Patient?> FindPatientByCpfAsync(int businessId, string cpf)
         {
