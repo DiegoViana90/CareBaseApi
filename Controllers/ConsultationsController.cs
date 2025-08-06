@@ -71,12 +71,11 @@ namespace CareBaseApi.Controllers
         }
 
         [HttpGet("patient/{patientId}")]
-        [SwaggerOperation(Summary = "Listar consultas de um paciente")]
         public async Task<IActionResult> GetConsultationsByPatient(int patientId)
         {
             try
             {
-                var consultations = await _consultationService.GetConsultationsByPatientAsync(patientId);
+                var consultations = await _consultationService.GetConsultationsByPatientWithNameAsync(patientId);
 
                 return Ok(new
                 {
@@ -89,5 +88,6 @@ namespace CareBaseApi.Controllers
                 return StatusCode(500, new { message = "Erro ao buscar consultas", details = ex.Message });
             }
         }
+
     }
 }

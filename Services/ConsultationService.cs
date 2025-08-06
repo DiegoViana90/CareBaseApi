@@ -2,6 +2,7 @@ using CareBaseApi.Dtos.Requests;
 using CareBaseApi.Models;
 using CareBaseApi.Repositories.Interfaces;
 using CareBaseApi.Services.Interfaces;
+using CareBaseApi.Dtos.Responses;
 
 namespace CareBaseApi.Services
 {
@@ -36,14 +37,34 @@ namespace CareBaseApi.Services
             return await _consultationRepository.AddAsync(consultation);
         }
 
+        public async Task<IEnumerable<ConsultationResponseDTO>> GetConsultationsByPatientWithNameAsync(int patientId)
+        {
+            var consultations = await _consultationRepository.GetByPatientIdAsync(patientId);
 
-        public async Task<IEnumerable<Consultation>> GetConsultationsByPatientAsync(int patientId)
-        {
-            return await _consultationRepository.GetByPatientIdAsync(patientId);
+            return consultations.Select(c => new ConsultationResponseDTO
+            {
+                ConsultationId = c.ConsultationId,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate,
+                PatientId = c.PatientId,
+                PatientName = c.Patient.Name
+            });
         }
-        public async Task<IEnumerable<Consultation>> GetAllConsultationsByBuAsync(int businessId)
+
+        public async Task<IEnumerable<ConsultationResponseDTO>> GetAllConsultationsByBuAsync(int businessId)
         {
-            return await _consultationRepository.GetByBusinessIdAsync(businessId);
+            var consultations = await _consultationRepository.GetByBusinessIdAsync(businessId);
+
+            return consultations.Select(c => new ConsultationResponseDTO
+            {
+                ConsultationId = c.ConsultationId,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate,
+                PatientId = c.PatientId,
+                PatientName = c.Patient.Name
+            });
         }
+
+
     }
 }
