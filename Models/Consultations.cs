@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using CareBaseApi.Enums;
 
 namespace CareBaseApi.Models
 {
@@ -28,11 +29,14 @@ namespace CareBaseApi.Models
 
         public int PatientId { get; set; }
 
+        public ConsultationStatus? Status { get; set; }
+
+
         [JsonIgnore]
         public Patient Patient { get; set; } = null!;
-        
+
         [JsonIgnore]
         public ConsultationDetails? Details { get; set; }
-
     }
+
 }

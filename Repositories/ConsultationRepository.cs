@@ -28,6 +28,7 @@ namespace CareBaseApi.Repositories
                 .OrderByDescending(c => c.StartDate)
                 .ToListAsync();
         }
+
         public async Task<IEnumerable<Consultation>> GetByBusinessIdAsync(int businessId)
         {
             return await _context.Consultations
@@ -35,11 +36,16 @@ namespace CareBaseApi.Repositories
                 .Where(c => c.Patient.BusinessId == businessId)
                 .ToListAsync();
         }
+
         public async Task<ConsultationDetails?> GetDetailsByConsultationIdAsync(int consultationId)
         {
             return await _context.ConsultationDetails
-                .FirstOrDefaultAsync(d => d.ConsultationId == consultationId);
+                .Include(cd => cd.Consultation)
+                .Where(cd => cd.Consultation != null && cd.ConsultationId == consultationId)
+                .FirstOrDefaultAsync();
+
         }
+
 
         public async Task AddOrUpdateDetailsAsync(ConsultationDetails details)
         {
@@ -60,7 +66,7 @@ namespace CareBaseApi.Repositories
                 _context.ConsultationDetails.Add(details);
             }
 
-            await _context.SaveChangesAsync();
+            // Removido SaveChangesAsync daqui pois ele é chamado fora, na transação do service
         }
 
         public async Task<Consultation?> GetByIdAsync(int consultationId)
@@ -68,5 +74,16 @@ namespace CareBaseApi.Repositories
             return await _context.Consultations.FirstOrDefaultAsync(c => c.ConsultationId == consultationId);
         }
 
+        // ✅ Suporte para SaveChanges manual (controlado no service com transaction)
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        // ✅ Expor o DbContext para controle de transações no service
+        public AppDbContext GetDbContext()
+        {
+            return _context;
+        }
     }
 }

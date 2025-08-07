@@ -6,4 +6,12 @@ namespace CareBaseApi.Enums
         User = 2,
         SM = 999
     }
+    public enum ConsultationStatus
+    {
+        Agendado = 0,
+        Compareceu = 1,
+        NaoCompareceu = 2,
+        Reagendado = 3
+    }
+
 }

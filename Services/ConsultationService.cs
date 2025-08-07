@@ -3,6 +3,8 @@ using CareBaseApi.Models;
 using CareBaseApi.Repositories.Interfaces;
 using CareBaseApi.Services.Interfaces;
 using CareBaseApi.Dtos.Responses;
+using CareBaseApi.Enums; // 👈 Importante para ConsultationStatus
+using Microsoft.EntityFrameworkCore;
 
 namespace CareBaseApi.Services
 {
@@ -11,7 +13,9 @@ namespace CareBaseApi.Services
         private readonly IConsultationRepository _consultationRepository;
         private readonly IPatientRepository _patientRepository;
 
-        public ConsultationService(IConsultationRepository consultationRepository, IPatientRepository patientRepository)
+        public ConsultationService(
+            IConsultationRepository consultationRepository,
+            IPatientRepository patientRepository)
         {
             _consultationRepository = consultationRepository;
             _patientRepository = patientRepository;
@@ -47,7 +51,10 @@ namespace CareBaseApi.Services
                 StartDate = c.StartDate,
                 EndDate = c.EndDate,
                 PatientId = c.PatientId,
-                PatientName = c.Patient.Name
+                PatientName = c.Patient.Name,
+                Status = c.Status ?? ConsultationStatus.Agendado
+
+ // 👈 adiciona isso aqui também
             });
         }
 
@@ -61,8 +68,10 @@ namespace CareBaseApi.Services
                 StartDate = c.StartDate,
                 EndDate = c.EndDate,
                 PatientId = c.PatientId,
-                PatientName = c.Patient.Name
+                PatientName = c.Patient.Name,
+                Status = c.Status ?? ConsultationStatus.Agendado
             });
+
         }
 
         public async Task AddOrUpdateConsultationDetailsAsync(UpdateConsultationDetailsRequestDTO dto)
@@ -71,22 +80,59 @@ namespace CareBaseApi.Services
             if (consultation == null)
                 throw new ArgumentException("Consulta não encontrada.");
 
-            var details = new ConsultationDetails
+            // Atualiza status e valor pago, se vierem
+            if (!string.IsNullOrWhiteSpace(dto.Status))
             {
-                ConsultationId = dto.ConsultationId,
-                Titulo1 = dto.Titulo1,
-                Titulo2 = dto.Titulo2,
-                Titulo3 = dto.Titulo3,
-                Texto1 = dto.Texto1,
-                Texto2 = dto.Texto2,
-                Texto3 = dto.Texto3
-            };
+                if (!Enum.TryParse<ConsultationStatus>(dto.Status, ignoreCase: true, out var statusEnum))
+                    throw new ArgumentException("Status inválido.");
 
-            await _consultationRepository.AddOrUpdateDetailsAsync(details);
+                consultation.Status = statusEnum;
+            }
+
+            if (dto.AmountPaid.HasValue)
+                consultation.AmountPaid = (decimal)dto.AmountPaid.Value;
+
+            // Inicia a transação
+            var context = _consultationRepository.GetDbContext();
+            await using var transaction = await context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Atualiza ou insere detalhes
+                var details = new ConsultationDetails
+                {
+                    ConsultationId = dto.ConsultationId,
+                    Titulo1 = dto.Titulo1,
+                    Titulo2 = dto.Titulo2,
+                    Titulo3 = dto.Titulo3,
+                    Texto1 = dto.Texto1,
+                    Texto2 = dto.Texto2,
+                    Texto3 = dto.Texto3
+                };
+
+                await _consultationRepository.AddOrUpdateDetailsAsync(details);
+
+                // Salva tudo
+                await _consultationRepository.SaveChangesAsync();
+
+                await transaction.CommitAsync(); // ✅ commit
+            }
+            catch
+            {
+                await transaction.RollbackAsync(); // ❌ rollback em caso de erro
+                throw;
+            }
         }
+
         public async Task<ConsultationDetails?> GetDetailsByConsultationIdAsync(int consultationId)
         {
-            return await _consultationRepository.GetDetailsByConsultationIdAsync(consultationId);
+            var details = await _consultationRepository.GetDetailsByConsultationIdAsync(consultationId);
+
+            if (details?.Consultation == null)
+                return null; // ou lançar uma exceção, se preferir
+
+            return details;
         }
+
     }
 }
