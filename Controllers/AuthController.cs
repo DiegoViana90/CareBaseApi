@@ -58,5 +58,28 @@ namespace CareBaseApi.Controllers
             }
         }
 
+        [Authorize]
+        [HttpGet("me")]
+        public IActionResult Me()
+        {
+            var identity = HttpContext.User.Identity;
+
+            if (identity == null || !identity.IsAuthenticated)
+                return Unauthorized(new { message = "Token inválido ou expirado." });
+
+            var claims = HttpContext.User.Claims;
+
+            var response = new
+            {
+                Id = claims.FirstOrDefault(c => c.Type == "id")?.Value,
+                Email = claims.FirstOrDefault(c => c.Type == "email")?.Value,
+                Name = claims.FirstOrDefault(c => c.Type == "name")?.Value,
+                Role = claims.FirstOrDefault(c => c.Type == "role")?.Value
+            };
+
+            return Ok(new { data = response });
+        }
+
+
     }
 }
