@@ -11,9 +11,12 @@ namespace CareBaseApi.Data
         public DbSet<User> Users => Set<User>();
         public DbSet<Patient> Patients => Set<Patient>();
         public DbSet<Consultation> Consultations => Set<Consultation>();
+        public DbSet<ConsultationDetails> ConsultationDetails => Set<ConsultationDetails>();
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
             modelBuilder.Entity<Business>(entity =>
             {
                 entity.HasKey(b => b.BusinessId);
@@ -56,6 +59,25 @@ namespace CareBaseApi.Data
                       .HasForeignKey(c => c.PatientId);
             });
 
+            modelBuilder.Entity<ConsultationDetails>(entity =>
+            {
+                entity.HasKey(cd => cd.ConsultationDetailsId);
+
+                entity.Property(cd => cd.Titulo1).IsRequired(false);
+                entity.Property(cd => cd.Titulo2).IsRequired(false);
+                entity.Property(cd => cd.Titulo3).IsRequired(false);
+                entity.Property(cd => cd.Texto1).IsRequired(false);
+                entity.Property(cd => cd.Texto2).IsRequired(false);
+                entity.Property(cd => cd.Texto3).IsRequired(false);
+
+                entity.HasOne(cd => cd.Consultation)
+                      .WithOne(c => c.Details)
+                      .HasForeignKey<ConsultationDetails>(cd => cd.ConsultationId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+
+
             // 👇 Força todos os DateTime/DateTime? a serem "timestamp without time zone"
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())
             {
@@ -66,6 +88,7 @@ namespace CareBaseApi.Data
                         property.SetColumnType("timestamp without time zone");
                     }
                 }
+
             }
         }
     }

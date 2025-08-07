@@ -89,5 +89,46 @@ namespace CareBaseApi.Controllers
             }
         }
 
+        [HttpGet("{id}/details")]
+        public async Task<IActionResult> GetDetails(int id)
+        {
+            try
+            {
+                var details = await _consultationService.GetDetailsByConsultationIdAsync(id);
+                if (details == null)
+                    return NotFound(new { message = "Detalhes não encontrados." });
+
+                return Ok(new { message = "Detalhes encontrados", data = details });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao buscar detalhes", details = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/details")]
+        [SwaggerOperation(Summary = "Atualizar ou criar detalhes da consulta")]
+        public async Task<IActionResult> AddOrUpdateDetails(int id, [FromBody] UpdateConsultationDetailsRequestDTO dto)
+        {
+            try
+            {
+                if (id != dto.ConsultationId)
+                    return BadRequest(new { message = "ID da URL não corresponde ao corpo da requisição." });
+
+                await _consultationService.AddOrUpdateConsultationDetailsAsync(dto);
+
+                return Ok(new { message = "Detalhes salvos com sucesso." });
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao salvar detalhes", details = ex.Message });
+            }
+        }
+
+
     }
 }

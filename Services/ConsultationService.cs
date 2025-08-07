@@ -65,6 +65,28 @@ namespace CareBaseApi.Services
             });
         }
 
+        public async Task AddOrUpdateConsultationDetailsAsync(UpdateConsultationDetailsRequestDTO dto)
+        {
+            var consultation = await _consultationRepository.GetByIdAsync(dto.ConsultationId);
+            if (consultation == null)
+                throw new ArgumentException("Consulta não encontrada.");
 
+            var details = new ConsultationDetails
+            {
+                ConsultationId = dto.ConsultationId,
+                Titulo1 = dto.Titulo1,
+                Titulo2 = dto.Titulo2,
+                Titulo3 = dto.Titulo3,
+                Texto1 = dto.Texto1,
+                Texto2 = dto.Texto2,
+                Texto3 = dto.Texto3
+            };
+
+            await _consultationRepository.AddOrUpdateDetailsAsync(details);
+        }
+        public async Task<ConsultationDetails?> GetDetailsByConsultationIdAsync(int consultationId)
+        {
+            return await _consultationRepository.GetDetailsByConsultationIdAsync(consultationId);
+        }
     }
 }

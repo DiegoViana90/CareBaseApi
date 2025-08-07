@@ -30,5 +30,9 @@ namespace CareBaseApi.Models
 
         [JsonIgnore]
         public Patient Patient { get; set; } = null!;
+        
+        [JsonIgnore]
+        public ConsultationDetails? Details { get; set; }
+
     }
 }

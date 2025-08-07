@@ -35,5 +35,38 @@ namespace CareBaseApi.Repositories
                 .Where(c => c.Patient.BusinessId == businessId)
                 .ToListAsync();
         }
+        public async Task<ConsultationDetails?> GetDetailsByConsultationIdAsync(int consultationId)
+        {
+            return await _context.ConsultationDetails
+                .FirstOrDefaultAsync(d => d.ConsultationId == consultationId);
+        }
+
+        public async Task AddOrUpdateDetailsAsync(ConsultationDetails details)
+        {
+            var existing = await _context.ConsultationDetails
+                .FirstOrDefaultAsync(d => d.ConsultationId == details.ConsultationId);
+
+            if (existing != null)
+            {
+                existing.Titulo1 = details.Titulo1;
+                existing.Titulo2 = details.Titulo2;
+                existing.Titulo3 = details.Titulo3;
+                existing.Texto1 = details.Texto1;
+                existing.Texto2 = details.Texto2;
+                existing.Texto3 = details.Texto3;
+            }
+            else
+            {
+                _context.ConsultationDetails.Add(details);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<Consultation?> GetByIdAsync(int consultationId)
+        {
+            return await _context.Consultations.FirstOrDefaultAsync(c => c.ConsultationId == consultationId);
+        }
+
     }
 }
