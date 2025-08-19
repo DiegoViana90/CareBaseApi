@@ -1,6 +1,7 @@
+// Services/Interfaces/IConsultationService.cs
 using CareBaseApi.Dtos.Requests;
-using CareBaseApi.Models;
 using CareBaseApi.Dtos.Responses;
+using CareBaseApi.Models;
 
 namespace CareBaseApi.Services.Interfaces
 {
@@ -11,5 +12,9 @@ namespace CareBaseApi.Services.Interfaces
         Task<IEnumerable<ConsultationResponseDTO>> GetAllConsultationsByBuAsync(int businessId);
         Task AddOrUpdateConsultationDetailsAsync(UpdateConsultationDetailsRequestDTO dto);
         Task<ConsultationDetails?> GetDetailsByConsultationIdAsync(int consultationId);
+        Task<List<Payment>> AddPaymentsAsync(int consultationId, List<CreatePaymentLineDTO> lines);
+        Task<List<Payment>> GetPaymentsAsync(int consultationId);
+        Task<decimal> GetTotalPaidAsync(int consultationId);
+        Task<ConsultationDetailsFullResponseDTO?> GetDetailsFullAsync(int consultationId);
     }
 }

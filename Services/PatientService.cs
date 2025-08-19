@@ -66,7 +66,6 @@ namespace CareBaseApi.Services
         {
             return await _patientRepository.GetByBusinessIdAsync(businessId);
         }
-
         public async Task<IEnumerable<PatientListDto>> GetPatientsWithLastConsultationAsync(int businessId)
         {
             var patientsRaw = await _patientRepository.GetSimplifiedWithLastConsultAsync(businessId);
@@ -88,7 +87,8 @@ namespace CareBaseApi.Services
                         ConsultationId = p.LastConsultation.ConsultationId,
                         StartDate = p.LastConsultation.StartDate,
                         EndDate = p.LastConsultation.EndDate,
-                        AmountPaid = p.LastConsultation.AmountPaid,
+                        // ⬇️ aqui estava AmountPaid
+                        TotalPaid = p.LastConsultation.TotalPaid,
                         Notes = p.LastConsultation.Notes
                     }
                     : null

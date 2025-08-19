@@ -13,5 +13,20 @@ namespace CareBaseApi.Enums
         NaoCompareceu = 2,
         Reagendado = 3
     }
+    public enum PaymentMethod
+    {
+        Pix = 0,
+        Debito = 1,
+        Credito = 2,
+        Dinheiro = 3
+    }
+
+    public enum PaymentStatus
+    {
+        Pending = 0,
+        Paid = 1,
+        Refunded = 2,
+        Voided = 3
+    }
 
 }

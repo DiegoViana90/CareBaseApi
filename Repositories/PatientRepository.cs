@@ -30,7 +30,6 @@ namespace CareBaseApi.Repositories
                 .OrderByDescending(p => p.CreatedAt)
                 .ToListAsync();
         }
-
         public async Task<IEnumerable<PatientListDto>> GetSimplifiedWithLastConsultAsync(int businessId)
         {
             return await _context.Patients
@@ -55,7 +54,10 @@ namespace CareBaseApi.Repositories
                             ConsultationId = c.ConsultationId,
                             StartDate = c.StartDate,
                             EndDate = c.EndDate,
-                            AmountPaid = c.AmountPaid,
+                            // ⬇️ somatório dos pagamentos
+                            TotalPaid = c.Payments
+                                .Select(x => (decimal?)x.Amount)
+                                .Sum() ?? 0m,
                             Notes = c.Notes
                         })
                         .FirstOrDefault()

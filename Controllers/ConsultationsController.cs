@@ -94,7 +94,7 @@ namespace CareBaseApi.Controllers
         {
             try
             {
-                var details = await _consultationService.GetDetailsByConsultationIdAsync(id);
+                var details = await _consultationService.GetDetailsFullAsync(id);
                 if (details == null)
                     return NotFound(new { message = "Detalhes não encontrados." });
 
@@ -105,6 +105,7 @@ namespace CareBaseApi.Controllers
                 return StatusCode(500, new { message = "Erro ao buscar detalhes", details = ex.Message });
             }
         }
+
 
         [HttpPut("{id}/details")]
         [SwaggerOperation(Summary = "Atualizar ou criar detalhes da consulta")]
@@ -130,5 +131,46 @@ namespace CareBaseApi.Controllers
         }
 
 
+        [HttpGet("{id}/payments")]
+        [SwaggerOperation(Summary = "Listar pagamentos de uma consulta")]
+        public async Task<IActionResult> GetPayments(int id)
+        {
+            try
+            {
+                var list = await _consultationService.GetPaymentsAsync(id);
+                return Ok(new { message = "Pagamentos encontrados", data = list });
+            }
+            catch (ArgumentException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao buscar pagamentos", details = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/payments")]
+        [SwaggerOperation(Summary = "Criar pagamentos (1..N) para a consulta")]
+        public async Task<IActionResult> CreatePayments(int id, [FromBody] CreatePaymentsRequestDTO dto)
+        {
+            try
+            {
+                if (id != dto.ConsultationId)
+                    return BadRequest(new { message = "ID da URL não corresponde ao corpo da requisição." });
+
+                var created = await _consultationService.AddPaymentsAsync(id, dto.Lines);
+                return Created("", new { message = "Pagamentos criados com sucesso", data = created });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro ao criar pagamentos", details = ex.Message });
+            }
+
+        }
     }
 }

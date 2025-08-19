@@ -68,10 +68,11 @@ namespace CareBaseApi.Repositories
 
             // Removido SaveChangesAsync daqui pois ele é chamado fora, na transação do service
         }
-
         public async Task<Consultation?> GetByIdAsync(int consultationId)
         {
-            return await _context.Consultations.FirstOrDefaultAsync(c => c.ConsultationId == consultationId);
+            return await _context.Consultations
+                .Include(c => c.Patient)            // <- NECESSÁRIO
+                .FirstOrDefaultAsync(c => c.ConsultationId == consultationId);
         }
 
         // ✅ Suporte para SaveChanges manual (controlado no service com transaction)

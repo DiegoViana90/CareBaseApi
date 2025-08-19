@@ -1,3 +1,4 @@
+// CareBaseApi/Models/Consultation.cs  (ATUALIZADO: remove AmountPaid e adiciona Payments)
 using System.Text.Json.Serialization;
 using CareBaseApi.Enums;
 
@@ -23,20 +24,18 @@ namespace CareBaseApi.Models
                 : null;
         }
 
-        public decimal? AmountPaid { get; set; }
-
         public string? Notes { get; set; }
-
         public int PatientId { get; set; }
-
         public ConsultationStatus? Status { get; set; }
-
 
         [JsonIgnore]
         public Patient Patient { get; set; } = null!;
 
         [JsonIgnore]
         public ConsultationDetails? Details { get; set; }
-    }
 
+        // 👇 navegação nova
+        [JsonIgnore]
+        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    }
 }

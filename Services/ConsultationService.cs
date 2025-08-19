@@ -1,9 +1,10 @@
+// Services/ConsultationService.cs (adaptação)
 using CareBaseApi.Dtos.Requests;
 using CareBaseApi.Models;
 using CareBaseApi.Repositories.Interfaces;
 using CareBaseApi.Services.Interfaces;
 using CareBaseApi.Dtos.Responses;
-using CareBaseApi.Enums; // 👈 Importante para ConsultationStatus
+using CareBaseApi.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace CareBaseApi.Services
@@ -12,13 +13,16 @@ namespace CareBaseApi.Services
     {
         private readonly IConsultationRepository _consultationRepository;
         private readonly IPatientRepository _patientRepository;
+        private readonly IPaymentRepository _paymentRepository; // 👈 novo
 
         public ConsultationService(
             IConsultationRepository consultationRepository,
-            IPatientRepository patientRepository)
+            IPatientRepository patientRepository,
+            IPaymentRepository paymentRepository)
         {
             _consultationRepository = consultationRepository;
             _patientRepository = patientRepository;
+            _paymentRepository = paymentRepository;
         }
 
         public async Task<Consultation> CreateConsultationAsync(CreateConsultationRequestDTO dto)
@@ -30,10 +34,8 @@ namespace CareBaseApi.Services
             var consultation = new Consultation
             {
                 StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Local),
-                EndDate = dto.EndDate.HasValue
-                    ? DateTime.SpecifyKind(dto.EndDate.Value, DateTimeKind.Local)
-                    : null,
-                AmountPaid = dto.AmountPaid,
+                EndDate = dto.EndDate.HasValue ? DateTime.SpecifyKind(dto.EndDate.Value, DateTimeKind.Local) : null,
+                // AmountPaid: deixar de usar; se mantiver a coluna, ignore-a aqui
                 Notes = dto.Notes,
                 PatientId = dto.PatientId
             };
@@ -53,8 +55,6 @@ namespace CareBaseApi.Services
                 PatientId = c.PatientId,
                 PatientName = c.Patient.Name,
                 Status = c.Status ?? ConsultationStatus.Agendado
-
- // 👈 adiciona isso aqui também
             });
         }
 
@@ -71,7 +71,6 @@ namespace CareBaseApi.Services
                 PatientName = c.Patient.Name,
                 Status = c.Status ?? ConsultationStatus.Agendado
             });
-
         }
 
         public async Task AddOrUpdateConsultationDetailsAsync(UpdateConsultationDetailsRequestDTO dto)
@@ -80,25 +79,21 @@ namespace CareBaseApi.Services
             if (consultation == null)
                 throw new ArgumentException("Consulta não encontrada.");
 
-            // Atualiza status e valor pago, se vierem
+            // Atualiza status (ok manter aqui)
             if (!string.IsNullOrWhiteSpace(dto.Status))
             {
-                if (!Enum.TryParse<ConsultationStatus>(dto.Status, ignoreCase: true, out var statusEnum))
+                if (!Enum.TryParse<ConsultationStatus>(dto.Status, true, out var statusEnum))
                     throw new ArgumentException("Status inválido.");
-
                 consultation.Status = statusEnum;
             }
 
-            if (dto.AmountPaid.HasValue)
-                consultation.AmountPaid = (decimal)dto.AmountPaid.Value;
+            // ❌ NÃO atualiza mais AmountPaid aqui (passa a vir da tabela Payments)
 
-            // Inicia a transação
             var context = _consultationRepository.GetDbContext();
             await using var transaction = await context.Database.BeginTransactionAsync();
 
             try
             {
-                // Atualiza ou insere detalhes
                 var details = new ConsultationDetails
                 {
                     ConsultationId = dto.ConsultationId,
@@ -111,28 +106,99 @@ namespace CareBaseApi.Services
                 };
 
                 await _consultationRepository.AddOrUpdateDetailsAsync(details);
-
-                // Salva tudo
                 await _consultationRepository.SaveChangesAsync();
 
-                await transaction.CommitAsync(); // ✅ commit
+                await transaction.CommitAsync();
             }
             catch
             {
-                await transaction.RollbackAsync(); // ❌ rollback em caso de erro
+                await transaction.RollbackAsync();
                 throw;
             }
         }
 
-        public async Task<ConsultationDetails?> GetDetailsByConsultationIdAsync(int consultationId)
+        public Task<ConsultationDetails?> GetDetailsByConsultationIdAsync(int consultationId)
+            => _consultationRepository.GetDetailsByConsultationIdAsync(consultationId);
+
+        // 👇 NOVOS MÉTODOS DE PAGAMENTO
+
+        public async Task<List<Payment>> AddPaymentsAsync(int consultationId, List<CreatePaymentLineDTO> lines)
         {
-            var details = await _consultationRepository.GetDetailsByConsultationIdAsync(consultationId);
+            var consultation = await _consultationRepository.GetByIdAsync(consultationId);
+            if (consultation == null)
+                throw new ArgumentException("Consulta não encontrada.");
 
-            if (details?.Consultation == null)
-                return null; // ou lançar uma exceção, se preferir
+            if (lines == null || lines.Count == 0)
+                throw new ArgumentException("Nenhuma linha de pagamento informada.");
 
-            return details;
+            var payments = lines.Select(l => new Payment
+            {
+                ConsultationId = consultationId,
+                Method = l.Method,
+                Installments = l.Installments,
+                Amount = l.Amount,
+                PaidAt = l.PaidAt,
+                Status = l.Status,
+                ReferenceId = l.ReferenceId,
+                Notes = l.Notes
+            }).ToList();
+
+            await _paymentRepository.AddRangeAsync(payments);
+            return payments;
         }
 
+        // Services/ConsultationService.cs
+        public async Task<ConsultationDetailsFullResponseDTO?> GetDetailsFullAsync(int consultationId)
+        {
+            var consultation = await _consultationRepository.GetByIdAsync(consultationId);
+            if (consultation == null) return null;
+
+            var details = await _consultationRepository.GetDetailsByConsultationIdAsync(consultationId);
+            var payments = await _paymentRepository.GetByConsultationIdAsync(consultationId);
+            var totalPaid = await _paymentRepository.SumByConsultationIdAsync(consultationId);
+
+            return new ConsultationDetailsFullResponseDTO
+            {
+                // blocos
+                Titulo1 = details?.Titulo1,
+                Titulo2 = details?.Titulo2,
+                Titulo3 = details?.Titulo3,
+                Texto1 = details?.Texto1,
+                Texto2 = details?.Texto2,
+                Texto3 = details?.Texto3,
+
+                // consulta
+                ConsultationId = consultation.ConsultationId,
+                StartDate = consultation.StartDate,
+                EndDate = consultation.EndDate,
+                PatientId = consultation.PatientId,
+                PatientName = consultation.Patient?.Name ?? string.Empty,
+                Status = consultation.Status ?? ConsultationStatus.Agendado,
+
+                // financeiro
+                TotalPaid = totalPaid,
+
+                // lista
+                Payments = payments.Select(p => new PaymentLineResponseDTO
+                {
+                    PaymentId = p.PaymentId,
+                    ConsultationId = p.ConsultationId,
+                    Method = (int)p.Method,   // <- cast explícito
+                    Installments = p.Installments,
+                    Amount = p.Amount,
+                    Status = (int)p.Status,   // <- cast explícito
+                    PaidAt = p.PaidAt,
+                    ReferenceId = p.ReferenceId,
+                    Notes = p.Notes,
+                }).ToList()
+            };
+        }
+
+
+        public Task<List<Payment>> GetPaymentsAsync(int consultationId)
+            => _paymentRepository.GetByConsultationIdAsync(consultationId);
+
+        public Task<decimal> GetTotalPaidAsync(int consultationId)
+            => _paymentRepository.SumByConsultationIdAsync(consultationId);
     }
 }
