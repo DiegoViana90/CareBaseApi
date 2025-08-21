@@ -24,10 +24,12 @@ namespace CareBaseApi.Repositories
         public async Task<IEnumerable<Consultation>> GetByPatientIdAsync(int patientId)
         {
             return await _context.Consultations
+                .Include(c => c.Patient) // 👈 ESSA LINHA É ESSENCIAL
                 .Where(c => c.PatientId == patientId)
                 .OrderByDescending(c => c.StartDate)
                 .ToListAsync();
         }
+
 
         public async Task<IEnumerable<Consultation>> GetByBusinessIdAsync(int businessId)
         {
