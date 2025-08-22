@@ -194,7 +194,6 @@ namespace CareBaseApi.Services
             };
         }
 
-
         public Task<List<Payment>> GetPaymentsAsync(int consultationId)
             => _paymentRepository.GetByConsultationIdAsync(consultationId);
 
