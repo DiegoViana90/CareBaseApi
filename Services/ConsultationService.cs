@@ -47,16 +47,29 @@ namespace CareBaseApi.Services
         {
             var consultations = await _consultationRepository.GetByPatientIdAsync(patientId);
 
-            return consultations.Select(c => new ConsultationResponseDTO
+            var result = new List<ConsultationResponseDTO>();
+            foreach (var c in consultations)
             {
-                ConsultationId = c.ConsultationId,
-                StartDate = c.StartDate,
-                EndDate = c.EndDate,
-                PatientId = c.PatientId,
-                PatientName = c.Patient.Name,
-                Status = c.Status ?? ConsultationStatus.Agendado
-            });
+                var payments = await _paymentRepository.GetByConsultationIdAsync(c.ConsultationId);
+                var total = payments.Sum(p => p.Amount);
+                var paid = payments.Where(p => p.Status == PaymentStatus.Paid).Sum(p => p.Amount);
+
+                result.Add(new ConsultationResponseDTO
+                {
+                    ConsultationId = c.ConsultationId,
+                    StartDate = c.StartDate,
+                    EndDate = c.EndDate,
+                    PatientId = c.PatientId,
+                    PatientName = c.Patient.Name,
+                    Status = c.Status ?? ConsultationStatus.Agendado,
+                    TotalValue = total,
+                    AmountPaid = paid
+                });
+            }
+
+            return result;
         }
+
 
         public async Task<IEnumerable<ConsultationResponseDTO>> GetAllConsultationsByBuAsync(int businessId)
         {
