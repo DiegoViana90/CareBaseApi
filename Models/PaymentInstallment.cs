@@ -1,4 +1,3 @@
-// Models/PaymentInstallment.cs
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -16,8 +15,22 @@ namespace CareBaseApi.Models
         public int Number { get; set; } // Número da parcela (1,2,3...)
         public decimal Amount { get; set; }
 
-        public DateTime DueDate { get; set; }   // 👈 faltava
+        private DateTime _dueDate;
+        public DateTime DueDate
+        {
+            get => _dueDate;
+            set => _dueDate = DateTime.SpecifyKind(value, DateTimeKind.Unspecified);
+        }
+
         public bool IsPaid { get; set; }
-        public DateTime? PaidAt { get; set; }
+
+        private DateTime? _paidAt;
+        public DateTime? PaidAt
+        {
+            get => _paidAt;
+            set => _paidAt = value.HasValue
+                ? DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified)
+                : null;
+        }
     }
 }
