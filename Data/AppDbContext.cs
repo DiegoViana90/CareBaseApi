@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using CareBaseApi.Models;
-using CareBaseApi.Enums; // se precisar dos enums no mapeamento
+using CareBaseApi.Enums;
 
 namespace CareBaseApi.Data
 {
@@ -13,18 +13,19 @@ namespace CareBaseApi.Data
         public DbSet<Patient> Patients => Set<Patient>();
         public DbSet<Consultation> Consultations => Set<Consultation>();
         public DbSet<ConsultationDetails> ConsultationDetails => Set<ConsultationDetails>();
-
-        // 👇 nova tabela
         public DbSet<Payment> Payments => Set<Payment>();
+        public DbSet<PaymentInstallment> PaymentInstallments => Set<PaymentInstallment>(); // 👈 nova tabela
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // 🔹 Business
             modelBuilder.Entity<Business>(entity =>
             {
                 entity.HasKey(b => b.BusinessId);
                 entity.Property(b => b.Name).IsRequired();
             });
 
+            // 🔹 User
             modelBuilder.Entity<User>(entity =>
             {
                 entity.HasKey(u => u.UserId);
@@ -36,6 +37,7 @@ namespace CareBaseApi.Data
                       .HasForeignKey(u => u.BusinessId);
             });
 
+            // 🔹 Patient
             modelBuilder.Entity<Patient>(entity =>
             {
                 entity.HasKey(p => p.PatientId);
@@ -46,6 +48,7 @@ namespace CareBaseApi.Data
                       .HasForeignKey(p => p.BusinessId);
             });
 
+            // 🔹 Consultation
             modelBuilder.Entity<Consultation>(entity =>
             {
                 entity.HasKey(c => c.ConsultationId);
@@ -64,6 +67,7 @@ namespace CareBaseApi.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
+            // 🔹 ConsultationDetails
             modelBuilder.Entity<ConsultationDetails>(entity =>
             {
                 entity.HasKey(cd => cd.ConsultationDetailsId);
@@ -81,7 +85,7 @@ namespace CareBaseApi.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // 🔥 mapeamento de Payment
+            // 🔹 Payment
             modelBuilder.Entity<Payment>(entity =>
             {
                 entity.HasKey(p => p.PaymentId);
@@ -96,13 +100,35 @@ namespace CareBaseApi.Data
 
                 // enums como int (padrão)
                 entity.Property(p => p.Method).IsRequired();
-                entity.Property(p => p.Status).HasDefaultValue(PaymentStatus.Paid).IsRequired();
+                entity.Property(p => p.Status)
+                      .HasDefaultValue(PaymentStatus.Paid)
+                      .IsRequired();
 
                 entity.Property(p => p.PaidAt).IsRequired(false);
                 entity.Property(p => p.ReferenceId).IsRequired(false);
                 entity.Property(p => p.Notes).IsRequired(false);
 
                 entity.HasIndex(p => p.ConsultationId);
+            });
+
+            // 🔹 PaymentInstallment
+            modelBuilder.Entity<PaymentInstallment>(entity =>
+            {
+                entity.HasKey(pi => pi.PaymentInstallmentId);
+
+                entity.Property(pi => pi.Amount)
+                      .HasColumnType("numeric(12,2)")
+                      .IsRequired();
+
+                entity.Property(pi => pi.IsPaid)
+                      .HasDefaultValue(false);
+
+                entity.HasOne(pi => pi.Payment)
+                      .WithMany(p => p.InstallmentsList)
+                      .HasForeignKey(pi => pi.PaymentId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(pi => pi.PaymentId);
             });
 
             // 👇 força todos os DateTime/DateTime? a "timestamp without time zone"
