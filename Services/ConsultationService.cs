@@ -13,16 +13,19 @@ namespace CareBaseApi.Services
     {
         private readonly IConsultationRepository _consultationRepository;
         private readonly IPatientRepository _patientRepository;
-        private readonly IPaymentRepository _paymentRepository; // 👈 novo
+        private readonly IPaymentRepository _paymentRepository;
+        private readonly IPaymentInstallmentRepository _installmentRepository;
 
         public ConsultationService(
             IConsultationRepository consultationRepository,
             IPatientRepository patientRepository,
-            IPaymentRepository paymentRepository)
+            IPaymentRepository paymentRepository,
+            IPaymentInstallmentRepository installmentRepository)
         {
             _consultationRepository = consultationRepository;
             _patientRepository = patientRepository;
             _paymentRepository = paymentRepository;
+            _installmentRepository = installmentRepository;
         }
 
         public async Task<Consultation> CreateConsultationAsync(CreateConsultationRequestDTO dto)
@@ -134,7 +137,6 @@ namespace CareBaseApi.Services
             => _consultationRepository.GetDetailsByConsultationIdAsync(consultationId);
 
         // 👇 NOVOS MÉTODOS DE PAGAMENTO
-
         public async Task<List<Payment>> AddPaymentsAsync(int consultationId, List<CreatePaymentLineDTO> lines)
         {
             var consultation = await _consultationRepository.GetByIdAsync(consultationId);
@@ -144,21 +146,81 @@ namespace CareBaseApi.Services
             if (lines == null || lines.Count == 0)
                 throw new ArgumentException("Nenhuma linha de pagamento informada.");
 
-            var payments = lines.Select(l => new Payment
-            {
-                ConsultationId = consultationId,
-                Method = l.Method,
-                Installments = l.Installments,
-                Amount = l.Amount,
-                PaidAt = l.PaidAt,
-                Status = l.Status,
-                ReferenceId = l.ReferenceId,
-                Notes = l.Notes
-            }).ToList();
+            var context = _consultationRepository.GetDbContext();
+            await using var transaction = await context.Database.BeginTransactionAsync();
 
-            await _paymentRepository.AddRangeAsync(payments);
-            return payments;
+            try
+            {
+                var payments = new List<Payment>();
+                var installments = new List<PaymentInstallment>();
+
+                foreach (var l in lines)
+                {
+                    var payment = new Payment
+                    {
+                        ConsultationId = consultationId,
+                        Method = l.Method,
+                        Installments = l.Installments,
+                        Amount = l.Amount,
+                        PaidAt = l.PaidAt,
+                        Status = l.Status,
+                        ReferenceId = l.ReferenceId,
+                        Notes = l.Notes
+                    };
+
+                    payments.Add(payment);
+                }
+
+                // salva os pagamentos
+                await _paymentRepository.AddRangeAsync(payments);
+
+                // cria as parcelas
+                foreach (var p in payments)
+                {
+                    if (p.Installments > 1)
+                    {
+                        var valorParcela = Math.Round(p.Amount / p.Installments, 2);
+
+                        for (int i = 1; i <= p.Installments; i++)
+                        {
+                            installments.Add(new PaymentInstallment
+                            {
+                                PaymentId = p.PaymentId,
+                                Number = i,
+                                Amount = valorParcela,
+                                DueDate = DateTime.UtcNow.AddMonths(i), // 👈 regra de vencimento
+                                IsPaid = false
+                            });
+                        }
+                    }
+                    else
+                    {
+                        // pagamento único → já cria como parcela "paga"
+                        installments.Add(new PaymentInstallment
+                        {
+                            PaymentId = p.PaymentId,
+                            Number = 1,
+                            Amount = p.Amount,
+                            DueDate = DateTime.UtcNow,
+                            IsPaid = p.Status == PaymentStatus.Paid,
+                            PaidAt = p.PaidAt
+                        });
+                    }
+                }
+
+                // salva as parcelas via repositório injetado
+                await _installmentRepository.AddRangeAsync(installments);
+
+                await transaction.CommitAsync();
+                return payments;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
+
 
         // Services/ConsultationService.cs
         public async Task<ConsultationDetailsFullResponseDTO?> GetDetailsFullAsync(int consultationId)
