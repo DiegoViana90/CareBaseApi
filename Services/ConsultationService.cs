@@ -136,7 +136,7 @@ namespace CareBaseApi.Services
         public Task<ConsultationDetails?> GetDetailsByConsultationIdAsync(int consultationId)
             => _consultationRepository.GetDetailsByConsultationIdAsync(consultationId);
 
-        public async Task<List<Payment>> AddPaymentsAsync(int consultationId, List<CreatePaymentLineDTO> lines)
+        public async Task<List<Payment>> AddPaymentsAsync(int consultationId, List<PaymentLineDto> lines)
         {
             var consultation = await _consultationRepository.GetByIdAsync(consultationId);
             if (consultation == null)
@@ -156,55 +156,76 @@ namespace CareBaseApi.Services
                 // 🔹 1. Create payments
                 foreach (var line in lines)
                 {
+                    if (!Enum.TryParse<PaymentMethod>(line.Method, true, out var methodEnum))
+                        throw new ArgumentException($"Método de pagamento inválido: {line.Method}");
+
                     var payment = new Payment
                     {
                         ConsultationId = consultationId,
-                        Method = line.Method,
+                        Method = methodEnum,
                         Installments = line.Installments,
                         Amount = line.Amount,
-                        PaidAt = line.PaidAt,
-                        Status = line.Status,
-                        ReferenceId = line.ReferenceId,
-                        Notes = line.Notes
+                        Status = PaymentStatus.Pending, // default
                     };
 
                     payments.Add(payment);
                 }
 
-                // 🔹 2. Save payments (generates IDs in database)
+                // 🔹 2. Save payments (gera IDs no banco)
                 await _paymentRepository.AddRangeAsync(payments);
                 await context.SaveChangesAsync();
 
-                // 🔹 3. Create installments with valid PaymentId
-                foreach (var payment in payments)
+                // 🔹 3. Criar parcelas com os IDs válidos
+                for (int idx = 0; idx < payments.Count; idx++)
                 {
-                    if (payment.Installments > 1)
-                    {
-                        var installmentAmount = Math.Round(payment.Amount / payment.Installments, 2);
+                    var payment = payments[idx];
+                    var lineDto = lines[idx]; // mesma ordem da lista recebida
 
-                        for (int i = 1; i <= payment.Installments; i++)
+                    if (lineDto.InstallmentsDetails != null && lineDto.InstallmentsDetails.Any())
+                    {
+                        foreach (var det in lineDto.InstallmentsDetails)
                         {
                             installments.Add(new PaymentInstallment
                             {
-                                PaymentId = payment.PaymentId, // 👈 now it has a valid ID
-                                Number = i,
-                                Amount = installmentAmount,
-                                DueDate = DateTime.Now.AddMonths(i),
-                                IsPaid = false
+                                PaymentId = payment.PaymentId,
+                                Number = det.Number,
+                                Amount = det.Value,
+                                DueDate = DateTime.Now.AddMonths(det.Number - 1), // 👈 gera automaticamente
+                                IsPaid = det.Paid
                             });
                         }
                     }
                     else
                     {
-                        installments.Add(new PaymentInstallment
+                        // 👉 fallback: gera automático
+                        if (payment.Installments > 1)
                         {
-                            PaymentId = payment.PaymentId,
-                            Number = 1,
-                            Amount = payment.Amount,
-                            DueDate = DateTime.Now,
-                            IsPaid = payment.Status == PaymentStatus.Paid,
-                            PaidAt = payment.PaidAt
-                        });
+                            var installmentAmount = Math.Round(payment.Amount / payment.Installments, 2);
+
+                            for (int i = 1; i <= payment.Installments; i++)
+                            {
+                                installments.Add(new PaymentInstallment
+                                {
+                                    PaymentId = payment.PaymentId,
+                                    Number = i,
+                                    Amount = installmentAmount,
+                                    DueDate = DateTime.Now.AddMonths(i),
+                                    IsPaid = false
+                                });
+                            }
+                        }
+                        else
+                        {
+                            installments.Add(new PaymentInstallment
+                            {
+                                PaymentId = payment.PaymentId,
+                                Number = 1,
+                                Amount = payment.Amount,
+                                DueDate = DateTime.Now,
+                                IsPaid = payment.Status == PaymentStatus.Paid,
+                                PaidAt = payment.PaidAt
+                            });
+                        }
                     }
                 }
 
@@ -221,6 +242,7 @@ namespace CareBaseApi.Services
                 throw;
             }
         }
+
 
         // Services/ConsultationService.cs
         public async Task<ConsultationDetailsFullResponseDTO?> GetDetailsFullAsync(int consultationId)

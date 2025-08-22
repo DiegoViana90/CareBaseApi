@@ -12,7 +12,7 @@ namespace CareBaseApi.Services.Interfaces
         Task<IEnumerable<ConsultationResponseDTO>> GetAllConsultationsByBuAsync(int businessId);
         Task AddOrUpdateConsultationDetailsAsync(UpdateConsultationDetailsRequestDTO dto);
         Task<ConsultationDetails?> GetDetailsByConsultationIdAsync(int consultationId);
-        Task<List<Payment>> AddPaymentsAsync(int consultationId, List<CreatePaymentLineDTO> lines);
+        Task<List<Payment>> AddPaymentsAsync(int consultationId, List<PaymentLineDto> lines);
         Task<List<Payment>> GetPaymentsAsync(int consultationId);
         Task<decimal> GetTotalPaidAsync(int consultationId);
         Task<ConsultationDetailsFullResponseDTO?> GetDetailsFullAsync(int consultationId);

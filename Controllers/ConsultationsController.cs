@@ -160,7 +160,12 @@ namespace CareBaseApi.Controllers
                     return BadRequest(new { message = "ID da URL não corresponde ao corpo da requisição." });
 
                 var created = await _consultationService.AddPaymentsAsync(id, dto.Lines);
-                return Created("", new { message = "Pagamentos criados com sucesso", data = created });
+
+                return Created("", new
+                {
+                    message = "Pagamentos criados com sucesso",
+                    data = created
+                });
             }
             catch (ArgumentException ex)
             {
@@ -168,9 +173,13 @@ namespace CareBaseApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Erro ao criar pagamentos", details = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "Erro ao criar pagamentos",
+                    details = ex.Message
+                });
             }
-
         }
+
     }
 }
