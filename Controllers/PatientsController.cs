@@ -133,6 +133,34 @@ namespace CareBaseApi.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        [SwaggerOperation(Summary = "Atualizar paciente")]
+        public async Task<IActionResult> UpdatePatient(int id, [FromBody] UpdatePatientRequestDTO dto)
+        {
+            try
+            {
+                var businessIdClaim = User.Claims.FirstOrDefault(c => c.Type == "BusinessId");
+                if (businessIdClaim == null)
+                    return Unauthorized(new { message = "BusinessId não encontrado no token." });
+
+                var businessId = int.Parse(businessIdClaim.Value);
+
+                var updated = await _patientService.UpdatePatientAsync(id, businessId, dto);
+                if (updated == null)
+                    return NotFound(new { message = "Paciente não encontrado." });
+
+                return Ok(new { message = "Paciente atualizado com sucesso", data = updated });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Erro interno ao atualizar paciente", details = ex.Message });
+            }
+        }
+
 
     }
 }

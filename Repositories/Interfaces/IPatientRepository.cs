@@ -10,5 +10,6 @@ namespace CareBaseApi.Repositories.Interfaces
         Task<IEnumerable<Patient>> GetByBusinessIdAsync(int businessId);
         Task<Patient?> FindPatientByIdAsync(int patientId);
         Task<IEnumerable<PatientListDto>> GetSimplifiedWithLastConsultAsync(int businessId);
+        Task<Patient?> UpdateAsync(Patient patient);
     }
 }

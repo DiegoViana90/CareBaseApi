@@ -97,7 +97,26 @@ namespace CareBaseApi.Services
             return result;
         }
 
+        public async Task<Patient?> UpdatePatientAsync(int patientId, int businessId, UpdatePatientRequestDTO dto)
+        {
+            var patient = await _patientRepository.FindPatientByIdAsync(patientId);
 
+            if (patient == null || patient.BusinessId != businessId)
+                return null; // não encontrado ou não pertence à empresa logada
+
+            // validações (se tiver validators já prontos)
+            if (!string.IsNullOrWhiteSpace(dto.Phone) && !PhoneValidator.IsValid(dto.Phone))
+                throw new ArgumentException("Telefone inválido.");
+
+            if (!string.IsNullOrWhiteSpace(dto.Email) && !EmailValidator.IsValid(dto.Email))
+                throw new ArgumentException("Email inválido.");
+
+            // aplica alterações
+            if (!string.IsNullOrWhiteSpace(dto.Phone)) patient.Phone = dto.Phone.Trim();
+            if (!string.IsNullOrWhiteSpace(dto.Email)) patient.Email = dto.Email.Trim();
+            if (!string.IsNullOrWhiteSpace(dto.Profession)) patient.Profession = dto.Profession.Trim();
+            return await _patientRepository.UpdateAsync(patient);
+        }
     }
 }
 

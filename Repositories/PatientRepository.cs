@@ -78,6 +78,13 @@ namespace CareBaseApi.Repositories
                 .FirstOrDefaultAsync(p => p.PatientId == patientId);
         }
 
+        public async Task<Patient?> UpdateAsync(Patient patient)
+        {
+            _context.Patients.Update(patient);
+            await _context.SaveChangesAsync();
+            return patient;
+        }
+
     }
 
 }
