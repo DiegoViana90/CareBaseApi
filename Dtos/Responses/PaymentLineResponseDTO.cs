@@ -12,5 +12,8 @@ namespace CareBaseApi.Dtos.Responses
         public DateTime? PaidAt { get; set; }
         public string? ReferenceId { get; set; }
         public string? Notes { get; set; }
+
+        // 🔹 Nova propriedade
+        public List<PaymentInstallmentResponseDTO>? InstallmentsDetails { get; set; }
     }
 }

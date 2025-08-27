@@ -243,8 +243,6 @@ namespace CareBaseApi.Services
             }
         }
 
-
-        // Services/ConsultationService.cs
         public async Task<ConsultationDetailsFullResponseDTO?> GetDetailsFullAsync(int consultationId)
         {
             var consultation = await _consultationRepository.GetByIdAsync(consultationId);
@@ -253,6 +251,40 @@ namespace CareBaseApi.Services
             var details = await _consultationRepository.GetDetailsByConsultationIdAsync(consultationId);
             var payments = await _paymentRepository.GetByConsultationIdAsync(consultationId);
             var totalPaid = await _paymentRepository.SumByConsultationIdAsync(consultationId);
+
+            var paymentDtos = new List<PaymentLineResponseDTO>();
+
+            foreach (var p in payments)
+            {
+                // carrega as parcelas de cada pagamento
+                var installments = await _installmentRepository.GetByPaymentIdAsync(p.PaymentId);
+
+                var dto = new PaymentLineResponseDTO
+                {
+                    PaymentId = p.PaymentId,
+                    ConsultationId = p.ConsultationId,
+                    Method = (int)p.Method,
+                    Installments = p.Installments,
+                    Amount = p.Amount,
+                    Status = (int)p.Status,
+                    PaidAt = p.PaidAt,
+                    ReferenceId = p.ReferenceId,
+                    Notes = p.Notes,
+
+                    // 🔹 agora popula as parcelas
+                    InstallmentsDetails = installments.Select(i => new PaymentInstallmentResponseDTO
+                    {
+                        PaymentInstallmentId = i.PaymentInstallmentId,
+                        Number = i.Number,
+                        Amount = i.Amount,
+                        DueDate = i.DueDate,
+                        IsPaid = i.IsPaid,
+                        PaidAt = i.PaidAt
+                    }).ToList()
+                };
+
+                paymentDtos.Add(dto);
+            }
 
             return new ConsultationDetailsFullResponseDTO
             {
@@ -275,21 +307,11 @@ namespace CareBaseApi.Services
                 // financeiro
                 TotalPaid = totalPaid,
 
-                // lista
-                Payments = payments.Select(p => new PaymentLineResponseDTO
-                {
-                    PaymentId = p.PaymentId,
-                    ConsultationId = p.ConsultationId,
-                    Method = (int)p.Method,   // <- cast explícito
-                    Installments = p.Installments,
-                    Amount = p.Amount,
-                    Status = (int)p.Status,   // <- cast explícito
-                    PaidAt = p.PaidAt,
-                    ReferenceId = p.ReferenceId,
-                    Notes = p.Notes,
-                }).ToList()
+                // lista de pagamentos + parcelas
+                Payments = paymentDtos
             };
         }
+
 
         public Task<List<Payment>> GetPaymentsAsync(int consultationId)
             => _paymentRepository.GetByConsultationIdAsync(consultationId);

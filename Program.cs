@@ -11,6 +11,8 @@ using System.Text;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json.Serialization;
+using System.Text.Json;                 // 👈 adicione no topo do arquivo
+using System.Text.Json.Serialization;   
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -77,12 +79,21 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
+// (você já tem)
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+
+        // 👇 força camelCase em todas as propriedades do JSON
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+
+        // opcional, mas bom: não enviar campos nulos
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
